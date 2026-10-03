@@ -284,8 +284,8 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02
 .chip b { font-family: var(--display); font-size: 1.1rem; }
 .chip i { font-style: normal; font-size: .8rem; color: var(--ink-2); }
 .chip.done { opacity: .3; }
-.chip.next { background: var(--mint); color: var(--on-accent); }
-.chip.next i { color: var(--on-accent); }
+.chip.cur { background: var(--mint); color: var(--on-accent); }
+.chip.cur i { color: var(--on-accent); }
 .controls { display: flex; justify-content: center; gap: 8px; }
 .ctl {
   width: 54px; height: 50px; border: 0; border-radius: 16px; background: var(--panel-2); color: var(--ink);

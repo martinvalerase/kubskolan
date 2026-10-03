@@ -113,7 +113,7 @@ function modal(html, buttons) {
 function chipsHtml(tokens, done = -1) {
   return tokens.map((t, i) => {
     const h = moveHint(t);
-    const cls = i < done ? 'done' : i === done ? 'next' : '';
+    const cls = i < done ? 'done' : i === done ? 'cur' : '';
     return `<span class="chip ${cls}" title="${esc(h.name)}"><b>${esc(t.text)}</b><i>${h.arrow}</i></span>`;
   }).join('');
 }
@@ -427,11 +427,11 @@ function renderLesson(wid, n) {
 
   if (step.cube) createPlayer(app.querySelector('.cube-panel'), step.cube);
   app.querySelector('.say').onclick = () => speak(step.title + '. ' + step.text);
-  app.querySelector('.prev').onclick = () => { location.hash = `#/lesson/${w.id}/${n - 1}`; };
+  app.querySelector('.navbar .prev').onclick = () => { location.hash = `#/lesson/${w.id}/${n - 1}`; };
   const go = () => last ? completeWorld(w) : (location.hash = `#/lesson/${w.id}/${n + 1}`);
-  const next = app.querySelector('.next');
+  const next = app.querySelector('.navbar .next');
   if (next) next.onclick = go;
-  const done = app.querySelector('.done-btn');
+  const done = app.querySelector('.text-panel .done-btn');
   if (done) done.onclick = go;
 }
 
