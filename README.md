@@ -62,6 +62,7 @@ Progress is stored per device in the browser (localStorage). Each child gets the
 | `css/style.css` | Styling |
 | `sw.js` | Offline cache — bump `VERSION` when you deploy changes |
 | `tools/make-icons.ps1` | Regenerates the PNG icons |
+| `kubskolanplattform/` | Clickable prototype and concept for Kubskolan as a wider platform (served at `/kubskolanplattform/`). Reuses `js/cube.js` and `js/icons.js` |
 
 ## Curriculum
 

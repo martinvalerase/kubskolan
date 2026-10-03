@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kubskolan – plattformskoncept</title>
+  <meta name="description" content="Prototyp och koncept för Kubskolan som svensk plattform för Rubiks kub.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0B2219">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Lexend:wght@300;400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<div class="proto-bar">Prototyp av Kubskolan som plattform · <a href="#koncept">Läs konceptet</a></div>
+<header class="site-head">
+  <div class="wrap head-row">
+    <a class="brand" href="#start" aria-label="Kubskolan, startsida">
+      <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M24 4 41 13.5v21L24 44 7 34.5v-21z" fill="#1B4A37"/>
+        <path d="M24 4 41 13.5 24 23 7 13.5z" fill="#C9E86B"/>
+        <path d="M7 13.5 24 23v21L7 34.5z" fill="#8EE3B1"/>
+        <path d="M41 13.5 24 23v21l17-9.5z" fill="#5FC4A8"/>
+        <path d="M24 4 41 13.5v21L24 44 7 34.5v-21zM7 13.5 24 23l17-9.5M24 23v21M15.5 8.75l17 9.5M32.5 8.75l-17 9.5M7 24l17 9.5 17-9.5M15.5 18.25v21M32.5 18.25v21" fill="none" stroke="#0B2219" stroke-width="2.2" stroke-linejoin="round"/>
+      </svg>
+      <span>Kubskolan</span>
+    </a>
+    <nav class="site-nav" aria-label="Huvudmeny">
+      <a href="#lar-dig" data-nav="lar-dig">Lär dig</a>
+      <a href="#notation" data-nav="notation">Notation</a>
+      <a href="#algoritmer" data-nav="algoritmer">Algoritmer</a>
+      <a href="#tavlingar" data-nav="tavlingar">Tävlingar</a>
+      <a href="#artiklar" data-nav="artiklar">Artiklar</a>
+      <a href="#junior" data-nav="junior" class="nav-junior">Junior</a>
+    </nav>
+  </div>
+</header>
+<main id="app" class="wrap"></main>
+<footer class="site-foot">
+  <div class="wrap foot-row">
+    <div>
+      <b>Kubskolan</b>
+      <p>Rubiks kub på svenska: metoder, notation, algoritmer, tävlingar och en egen skola för barn.</p>
+    </div>
+    <div>
+      <b>Om datan</b>
+      <p>Tävlingar och resultat kommer från <a href="https://www.worldcubeassociation.org" target="_blank" rel="noopener">World Cube Association</a>. Svenska tävlingar arrangeras bland annat av Svenska kubförbundet (SveKub).</p>
+    </div>
+    <div>
+      <b>Prototyp</b>
+      <p><a href="#koncept">Konceptet</a> beskriver hela plattformen, vad som finns här och vad som är planerat.</p>
+    </div>
+  </div>
+</footer>
+<div id="modal-root"></div>
+<script type="module" src="js/site.js"></script>
+</body>
+</html>
