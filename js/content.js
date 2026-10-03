@@ -218,9 +218,9 @@ export const WORLDS = [
       },
     ],
     cases: [
-      { id: 'oll_line', name: 'Linje', alg: "F R U R' U' F'", mask: 'oll' },
-      { id: 'oll_l', name: 'L', alg: "F U R U' R' F'", mask: 'oll' },
-      { id: 'oll_dot', name: 'Prick', alg: "F R U R' U' F' U2 F U R U' R' F'", mask: 'oll' },
+      { id: 'oll_line', name: 'Linje', alg: "F R U R' U' F'", mask: 'ollCross' },
+      { id: 'oll_l', name: 'L', alg: "F U R U' R' F'", mask: 'ollCross' },
+      { id: 'oll_dot', name: 'Prick', alg: "F R U R' U' F' U2 F U R U' R' F'", mask: 'ollCross' },
     ],
   },
   {

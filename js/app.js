@@ -160,7 +160,7 @@ function createPlayer(host, cfg) {
     </div>`;
 
   // Brantare vinkel när det är toppen man ska titta på
-  const pitch = cfg.pitch ?? (cfg.mask === 'oll' ? -45 : undefined);
+  const pitch = cfg.pitch ?? (cfg.mask === 'oll' || cfg.mask === 'ollCross' ? -45 : undefined);
   const view = new CubeView(host.querySelector('.cube-box'), { mask: cfg.mask || 'full', pitch, yaw: cfg.yaw });
   views.push(view);
   view.applyTokens(setup);
