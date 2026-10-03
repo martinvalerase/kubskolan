@@ -4,7 +4,7 @@
 export const COLORS = {
   U: '#FFD500', D: '#FFFFFF', F: '#00A651', B: '#1565D8', R: '#FF7A00', L: '#E3172B',
 };
-const GRAY = '#80858f';
+const GRAY = '#4F5E57';
 const SIZE = 100; // cubie-storlek i px innan skalning
 
 const DIRS = { R: [1, 0, 0], L: [-1, 0, 0], U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1], B: [0, 0, -1] };

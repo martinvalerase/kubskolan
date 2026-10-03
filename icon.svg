@@ -1,41 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#7c4dff"/>
-  <g transform="translate(256 234)">
-    <!-- topp (gul) -->
-    <g fill="#FFD500" stroke="#16171c" stroke-width="10" stroke-linejoin="round">
-      <path d="M0-170 L56-138 L0-106 L-56-138Z"/>
-      <path d="M56-138 L112-106 L56-74 L0-106Z"/>
-      <path d="M-56-138 L0-106 L-56-74 L-112-106Z"/>
-      <path d="M0-106 L56-74 L0-42 L-56-74Z"/>
-      <path d="M112-106 L168-74 L112-42 L56-74Z"/>
-      <path d="M-112-106 L-56-74 L-112-42 L-168-74Z"/>
-      <path d="M56-74 L112-42 L56-10 L0-42Z"/>
-      <path d="M-56-74 L0-42 L-56-10 L-112-42Z"/>
-      <path d="M0-42 L56-10 L0 22 L-56-10Z"/>
-    </g>
-    <!-- vänster (grön) -->
-    <g fill="#00A651" stroke="#16171c" stroke-width="10" stroke-linejoin="round">
-      <path d="M-168-74 L-112-42 L-112 22 L-168-10Z"/>
-      <path d="M-112-42 L-56-10 L-56 54 L-112 22Z"/>
-      <path d="M-56-10 L0 22 L0 86 L-56 54Z"/>
-      <path d="M-168-10 L-112 22 L-112 86 L-168 54Z"/>
-      <path d="M-112 22 L-56 54 L-56 118 L-112 86Z"/>
-      <path d="M-56 54 L0 86 L0 150 L-56 118Z"/>
-      <path d="M-168 54 L-112 86 L-112 150 L-168 118Z"/>
-      <path d="M-112 86 L-56 118 L-56 182 L-112 150Z"/>
-      <path d="M-56 118 L0 150 L0 214 L-56 182Z"/>
-    </g>
-    <!-- höger (orange) -->
-    <g fill="#FF7A00" stroke="#16171c" stroke-width="10" stroke-linejoin="round">
-      <path d="M168-74 L112-42 L112 22 L168-10Z"/>
-      <path d="M112-42 L56-10 L56 54 L112 22Z"/>
-      <path d="M56-10 L0 22 L0 86 L56 54Z"/>
-      <path d="M168-10 L112 22 L112 86 L168 54Z"/>
-      <path d="M112 22 L56 54 L56 118 L112 86Z"/>
-      <path d="M56 54 L0 86 L0 150 L56 118Z"/>
-      <path d="M168 54 L112 86 L112 150 L168 118Z"/>
-      <path d="M112 86 L56 118 L56 182 L112 150Z"/>
-      <path d="M56 118 L0 150 L0 214 L56 182Z"/>
-    </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <rect width="48" height="48" rx="11" fill="#0B2219"/>
+  <g transform="translate(4.4 4.8) scale(.82)">
+    <path d="M24 4 41 13.5v21L24 44 7 34.5v-21z" fill="#1B4A37"/>
+    <path d="M24 4 41 13.5 24 23 7 13.5z" fill="#C9E86B"/>
+    <path d="M7 13.5 24 23v21L7 34.5z" fill="#8EE3B1"/>
+    <path d="M41 13.5 24 23v21l17-9.5z" fill="#5FC4A8"/>
+    <path d="M24 4 41 13.5v21L24 44 7 34.5v-21zM7 13.5 24 23l17-9.5M24 23v21M15.5 8.75l17 9.5M32.5 8.75l-17 9.5M7 24l17 9.5 17-9.5M15.5 18.25v21M32.5 18.25v21" fill="none" stroke="#0B2219" stroke-width="2.2" stroke-linejoin="round"/>
   </g>
 </svg>

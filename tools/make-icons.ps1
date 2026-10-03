@@ -6,14 +6,14 @@ function Draw-Icon([int]$size, [string]$file) {
   $bmp = New-Object System.Drawing.Bitmap $size, $size
   $g = [System.Drawing.Graphics]::FromImage($bmp)
   $g.SmoothingMode = 'AntiAlias'
-  $g.Clear([System.Drawing.Color]::FromArgb(124, 77, 255))
+  $g.Clear([System.Drawing.Color]::FromArgb(11, 34, 25))
   $k = $size / 512.0
-  $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(22, 23, 28)), (10 * $k)
+  $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(11, 34, 25)), (12 * $k)
   $pen.LineJoin = 'Round'
   $faces = @(
-    @{ c = [System.Drawing.Color]::FromArgb(255, 213, 0);  o = @(0, -170); a = @(56, 32);  b = @(-56, 32) },
-    @{ c = [System.Drawing.Color]::FromArgb(0, 166, 81);   o = @(-168, -74); a = @(56, 32); b = @(0, 64) },
-    @{ c = [System.Drawing.Color]::FromArgb(255, 122, 0);  o = @(168, -74); a = @(-56, 32); b = @(0, 64) }
+    @{ c = [System.Drawing.Color]::FromArgb(201, 232, 107); o = @(0, -170); a = @(56, 32);  b = @(-56, 32) },
+    @{ c = [System.Drawing.Color]::FromArgb(142, 227, 177); o = @(-168, -74); a = @(56, 32); b = @(0, 64) },
+    @{ c = [System.Drawing.Color]::FromArgb(95, 196, 168);  o = @(168, -74); a = @(-56, 32); b = @(0, 64) }
   )
   foreach ($f in $faces) {
     $brush = New-Object System.Drawing.SolidBrush $f.c

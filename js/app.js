@@ -1,5 +1,6 @@
 import { CubeView, parseAlg, invertAlg, moveHint, randomScramble } from './cube.js';
-import { WORLDS, ALL_CASES, caseById, AVATARS } from './content.js';
+import { WORLDS, ALL_CASES, caseById } from './content.js';
+import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES } from './icons.js';
 
 // ---------- Lagring ----------
 
@@ -18,8 +19,8 @@ function save() {
 }
 const me = () => db.profiles.find(p => p.id === db.current);
 
-function newProfile(name, avatar) {
-  return { id: Date.now().toString(36), name, avatar, lessons: {}, quiz: {}, boxes: {}, times: [], stepAt: {} };
+function newProfile(name, av) {
+  return { id: Date.now().toString(36), name, avatar: av, lessons: {}, quiz: {}, boxes: {}, times: [], stepAt: {} };
 }
 
 // ---------- Progress ----------
@@ -40,17 +41,24 @@ function stars(p, w) {
   return s;
 }
 
-const starText = n => '★'.repeat(n) + '☆'.repeat(3 - n);
+const starsHtml = n => `<span class="stars" aria-label="${n} av 3 stjärnor">${[0, 1, 2].map(i => icon(i < n ? 'star' : 'starO', i < n ? 'on' : '')).join('')}</span>`;
+const pAvatar = (p, cls) => avatar(p.avatar, p.name, p.id, cls);
 
 // ---------- Hjälpfunktioner ----------
 
 const app = document.getElementById('app');
 let views = [];
+let cleanups = [];
 
 function clearViews() {
   views.forEach(v => v.destroy());
   views = [];
   if (window.speechSynthesis) speechSynthesis.cancel();
+}
+function clearScreen() {
+  clearViews();
+  cleanups.forEach(fn => fn());
+  cleanups = [];
 }
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -72,14 +80,14 @@ function speak(html) {
 function confetti() {
   const box = document.createElement('div');
   box.className = 'confetti';
-  const colors = ['#FFD500', '#00A651', '#1565D8', '#FF7A00', '#E3172B', '#ffffff'];
-  for (let i = 0; i < 90; i++) {
+  const colors = ['#8EE3B1', '#C9E86B', '#E9F2DC', '#5FC4A8', '#FFD500', '#FF7A00'];
+  for (let i = 0; i < 70; i++) {
     const s = document.createElement('span');
     s.style.left = Math.random() * 100 + '%';
     s.style.background = colors[i % colors.length];
-    s.style.animationDelay = Math.random() * 0.6 + 's';
-    s.style.animationDuration = 1.6 + Math.random() * 1.4 + 's';
-    s.style.transform = `rotate(${Math.random() * 360}deg)`;
+    s.style.animationDelay = Math.random() * 0.5 + 's';
+    s.style.animationDuration = 1.8 + Math.random() * 1.2 + 's';
+    if (i % 3 === 0) s.style.borderRadius = '50%';
     box.appendChild(s);
   }
   document.body.appendChild(box);
@@ -89,7 +97,7 @@ function confetti() {
 function modal(html, buttons) {
   const wrap = document.createElement('div');
   wrap.className = 'modal-wrap';
-  wrap.innerHTML = `<div class="modal">${html}<div class="modal-buttons"></div></div>`;
+  wrap.innerHTML = `<div class="modal" role="dialog">${html}<div class="modal-buttons"></div></div>`;
   const row = wrap.querySelector('.modal-buttons');
   for (const [label, fn, cls] of buttons) {
     const b = document.createElement('button');
@@ -110,11 +118,23 @@ function chipsHtml(tokens, done = -1) {
   }).join('');
 }
 
+function topbar({ back = '#/map', middle = '', right = '' } = {}) {
+  return `<header class="topbar">
+    <a class="icon-btn" href="${back}" aria-label="Stäng">${icon('close')}</a>
+    <div class="topbar-mid">${middle}</div>
+    <div class="topbar-right">${right}</div>
+  </header>`;
+}
+
+const progressBar = (done, total) =>
+  `<div class="progress" role="progressbar" aria-valuenow="${done}" aria-valuemax="${total}"><span style="width:${(done / total) * 100}%"></span></div>
+   <span class="progress-num">${Math.min(done + 1, total)}/${total}</span>`;
+
 // ---------- Kubspelare ----------
 
 const PAD = ['R', "R'", 'L', "L'", 'U', "U'", 'D', "D'", 'F', "F'"];
 
-// cfg: { setup, setupInv, setupTokens, alg, mask, pad, pitch, yaw, caseRef, noControls }
+// cfg: { setup, setupInv, setupTokens, alg, mask, pad, pitch, yaw, caseRef }
 function createPlayer(host, cfg) {
   if (cfg.caseRef) {
     const c = caseById(cfg.caseRef);
@@ -122,22 +142,21 @@ function createPlayer(host, cfg) {
   }
   const tokens = parseAlg(cfg.alg || '');
   const setup = cfg.setupTokens || (cfg.setupInv ? invertAlg(parseAlg(cfg.setupInv)) : parseAlg(cfg.setup || ''));
-  const showControls = tokens.length && !cfg.noControls;
 
   host.innerHTML = `
     <div class="player">
       <div class="cube-box"></div>
-      ${showControls ? `
+      ${tokens.length ? `
         <div class="chips"></div>
         <div class="controls">
-          <button class="ctl" data-a="reset" aria-label="Börja om">⏮</button>
-          <button class="ctl" data-a="back" aria-label="Ett steg bakåt">◀</button>
-          <button class="ctl play" data-a="play" aria-label="Spela">▶</button>
-          <button class="ctl" data-a="fwd" aria-label="Ett steg framåt">▶|</button>
-          <button class="ctl" data-a="speed" aria-label="Långsamt">🐢</button>
+          <button class="ctl" data-a="reset" aria-label="Börja om">${icon('restart')}</button>
+          <button class="ctl" data-a="back" aria-label="Ett drag bakåt">${icon('stepB')}</button>
+          <button class="ctl play" data-a="play" aria-label="Spela">${icon('play')}</button>
+          <button class="ctl" data-a="fwd" aria-label="Ett drag framåt">${icon('stepF')}</button>
+          <button class="ctl speed" data-a="speed" aria-label="Långsamt">½×</button>
         </div>` : ''}
-      ${cfg.pad ? `<div class="pad">${PAD.map(m => `<button class="padbtn" data-m="${m}">${m}<i>${moveHint(parseAlg(m)[0]).arrow}</i></button>`).join('')}
-        <button class="padbtn wide" data-m="reset">↺ Nollställ</button></div>` : ''}
+      ${cfg.pad ? `<div class="pad">${PAD.map(m => `<button class="padbtn" data-m="${m}"><b>${m}</b><i>${moveHint(parseAlg(m)[0]).arrow}</i></button>`).join('')}
+        <button class="padbtn wide" data-m="reset">${icon('restart')} Nollställ</button></div>` : ''}
     </div>`;
 
   // Brantare vinkel när det är toppen man ska titta på
@@ -152,7 +171,10 @@ function createPlayer(host, cfg) {
   const playBtn = host.querySelector('[data-a=play]');
   const update = () => {
     if (chipsEl) chipsEl.innerHTML = chipsHtml(tokens, i);
-    if (playBtn) playBtn.textContent = playing ? '⏸' : '▶';
+    if (playBtn) {
+      playBtn.innerHTML = icon(playing ? 'pause' : 'play');
+      playBtn.setAttribute('aria-label', playing ? 'Pausa' : 'Spela');
+    }
   };
   update();
 
@@ -209,7 +231,7 @@ function createPlayer(host, cfg) {
 // ---------- Router ----------
 
 function route() {
-  clearViews();
+  clearScreen();
   const [name, a, b] = location.hash.replace(/^#\/?/, '').split('/');
   if (!me() && !['parent', ''].includes(name || '')) { location.hash = '#/'; return; }
   window.scrollTo(0, 0);
@@ -226,21 +248,35 @@ window.addEventListener('hashchange', route);
 
 // ---------- Profiler ----------
 
+const LOGO = `<svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
+  <path d="M24 4 41 13.5v21L24 44 7 34.5v-21z" fill="#1B4A37"/>
+  <path d="M24 4 41 13.5 24 23 7 13.5z" fill="#C9E86B"/>
+  <path d="M7 13.5 24 23v21L7 34.5z" fill="#8EE3B1"/>
+  <path d="M41 13.5 24 23v21l17-9.5z" fill="#5FC4A8"/>
+  <path d="M24 4 41 13.5v21L24 44 7 34.5v-21zM7 13.5 24 23l17-9.5M24 23v21M15.5 8.75l17 9.5M32.5 8.75l-17 9.5M7 24l17 9.5 17-9.5M15.5 18.25v21M32.5 18.25v21" fill="none" stroke="#0B2219" stroke-width="2.2" stroke-linejoin="round"/>
+</svg>`;
+
 function renderProfiles() {
   app.innerHTML = `
     <div class="screen profiles">
-      <h1 class="logo"><span class="logo-cube">🧊</span> Kubskolan</h1>
+      <div class="brand">${LOGO}<h1>Kubskolan</h1></div>
       <p class="lead">Vem ska kuba idag?</p>
       <div class="profile-grid">
-        ${db.profiles.map(p => `
+        ${db.profiles.map(p => {
+          const done = WORLDS.filter(w => p.lessons[w.id]).length;
+          return `
           <button class="profile-card" data-id="${p.id}">
-            <span class="avatar">${p.avatar}</span>
+            ${pAvatar(p, 'lg')}
             <span class="pname">${esc(p.name)}</span>
-            <span class="pbadges">${WORLDS.filter(w => p.lessons[w.id]).map(w => w.badge).join('') || '&nbsp;'}</span>
-          </button>`).join('')}
-        <button class="profile-card add" data-id="new"><span class="avatar">➕</span><span class="pname">Ny kubare</span></button>
+            <span class="pmeta">${done} av ${WORLDS.length} steg</span>
+          </button>`;
+        }).join('')}
+        <button class="profile-card add" data-id="new">
+          <span class="add-circle">${icon('plus')}</span>
+          <span class="pname">Ny kubare</span>
+        </button>
       </div>
-      <a class="parent-link" href="#/parent">👪 För föräldrar</a>
+      <a class="parent-link" href="#/parent">${icon('users')} För föräldrar</a>
     </div>`;
   app.querySelectorAll('.profile-card').forEach(b => b.onclick = () => {
     if (b.dataset.id === 'new') return newProfileDialog();
@@ -250,63 +286,110 @@ function renderProfiles() {
 }
 
 function newProfileDialog() {
-  let avatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+  let s = Math.floor(Math.random() * AV_SHAPES), c = Math.floor(Math.random() * AV_COLORS.length);
   const w = modal(`
     <h2>Ny kubare</h2>
-    <input class="name-input" maxlength="16" placeholder="Vad heter du?" autocomplete="off">
-    <div class="avatar-pick">${AVATARS.map(a => `<button class="av ${a === avatar ? 'sel' : ''}">${a}</button>`).join('')}</div>`,
-  [['Avbryt', null, 'ghost'], ['Klar! ✔', () => {
-    const name = w.querySelector('.name-input').value.trim() || 'Kubare';
-    const p = newProfile(name, avatar);
+    <div class="av-preview"></div>
+    <input class="field" maxlength="16" placeholder="Vad heter du?" autocomplete="off">
+    <p class="pick-label">Form</p>
+    <div class="pick shapes">${Array.from({ length: AV_SHAPES }, (_, i) => `<button class="pick-btn" data-s="${i}" aria-label="Form ${i + 1}"></button>`).join('')}</div>
+    <p class="pick-label">Färg</p>
+    <div class="pick colors">${AV_COLORS.map((col, i) => `<button class="pick-btn dot" data-c="${i}" style="--c:${col}" aria-label="Färg ${i + 1}"></button>`).join('')}</div>`,
+  [['Avbryt', null, 'ghost'], [`${icon('check')} Klar`, () => {
+    const name = w.querySelector('.field').value.trim() || 'Kubare';
+    const p = newProfile(name, `s${s}c${c}`);
     db.profiles.push(p); db.current = p.id; save();
     location.hash = '#/map';
   }, 'primary']]);
-  w.querySelectorAll('.av').forEach(b => b.onclick = () => {
-    avatar = b.textContent;
-    w.querySelectorAll('.av').forEach(x => x.classList.toggle('sel', x === b));
-  });
-  setTimeout(() => w.querySelector('.name-input').focus(), 50);
+  const input = w.querySelector('.field');
+  const draw = () => {
+    const name = input.value || '?';
+    w.querySelector('.av-preview').innerHTML = avatar(`s${s}c${c}`, name, '', 'xl');
+    w.querySelectorAll('[data-s]').forEach(b => {
+      b.innerHTML = avatar(`s${b.dataset.s}c${c}`, name, '', 'sm');
+      b.classList.toggle('sel', +b.dataset.s === s);
+    });
+    w.querySelectorAll('[data-c]').forEach(b => b.classList.toggle('sel', +b.dataset.c === c));
+  };
+  w.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { s = +b.dataset.s; draw(); });
+  w.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { c = +b.dataset.c; draw(); });
+  input.oninput = draw;
+  draw();
+  setTimeout(() => input.focus(), 50);
 }
 
 // ---------- Karta ----------
 
 function renderMap() {
   const p = me();
-  const badges = WORLDS.filter(w => p.lessons[w.id]);
+  const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
+  const current = WORLDS.findIndex((w, i) => isUnlocked(p, i) && !p.lessons[w.id]);
+
   app.innerHTML = `
     <div class="screen map">
-      <header class="topbar">
-        <a class="who" href="#/"><span class="avatar sm">${p.avatar}</span>${esc(p.name)}</a>
-        <div class="shelf" title="Dina märken">${badges.map(w => `<span>${w.badge}</span>`).join('') || '<em>Inga märken än</em>'}</div>
+      <header class="map-head">
+        <a class="who" href="#/" aria-label="Byt kubare">${pAvatar(p, 'md')}</a>
+        <div>
+          <h1>Hej ${esc(p.name)}!</h1>
+          <p class="sub">${doneCount === WORLDS.length ? 'Du har klarat alla steg.' : `${doneCount} av ${WORLDS.length} steg klara`}</p>
+        </div>
       </header>
-      <div class="quick">
-        <a class="big-btn train" href="#/train">🎯 Träna</a>
-        <a class="big-btn timer" href="#/timer">⏱️ Tidtagning</a>
+      <div class="tiles">
+        <a class="tile" href="#/train"><span class="tile-ic">${icon('target')}</span><b>Träna</b><small>Algoritmer</small></a>
+        <a class="tile alt" href="#/timer"><span class="tile-ic">${icon('timer')}</span><b>Tidtagning</b><small>Hur snabb är du?</small></a>
       </div>
-      <ol class="path">
-        ${WORLDS.map((w, i) => {
-          const open = isUnlocked(p, i);
-          const s = stars(p, w);
-          return `
-          <li class="world ${open ? '' : 'locked'} ${p.lessons[w.id] ? 'done' : ''}" style="--wc:${w.color}">
-            <button class="world-btn" data-i="${i}" ${open ? '' : 'disabled'}>
-              <span class="world-emoji">${open ? w.emoji : '🔒'}</span>
-              <span class="world-text">
-                <b>${i}. ${esc(w.title)}</b>
-                <small>${esc(w.short)}</small>
-              </span>
-              <span class="stars">${starText(s)}</span>
-            </button>
-            ${open && hasQuiz(w) && p.lessons[w.id] ? `<a class="quiz-link" href="#/quiz/${w.id}">❓ Quiz</a>` : ''}
-          </li>`;
-        }).join('')}
-      </ol>
+      <div class="path-wrap">
+        <svg class="path-line" aria-hidden="true"><path class="track"/><path class="trail"/></svg>
+        <ol class="path">
+          ${WORLDS.map((w, i) => {
+            const open = isUnlocked(p, i);
+            const done = !!p.lessons[w.id];
+            const x = 0.5 + 0.38 * Math.sin(i * 1.15);
+            return `
+            <li class="stop ${open ? '' : 'locked'} ${done ? 'done' : ''} ${i === current ? 'current' : ''}" style="--x:${x.toFixed(3)}">
+              <button class="node" data-i="${i}" ${open ? '' : 'disabled'} aria-label="${esc(w.title)}">
+                ${open ? glyph(w.id) : icon('lock')}
+                ${i === current ? '<span class="node-tag">Start</span>' : ''}
+              </button>
+              <div class="stop-label">
+                <span class="stop-num">Steg ${i}</span>
+                <b>${esc(w.title)}</b>
+                ${done ? starsHtml(stars(p, w)) : `<small>${esc(w.short)}</small>`}
+                ${open && done && hasQuiz(w) ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} Quiz</a>` : ''}
+              </div>
+            </li>`;
+          }).join('')}
+        </ol>
+      </div>
     </div>`;
-  app.querySelectorAll('.world-btn').forEach(b => b.onclick = () => {
+
+  app.querySelectorAll('.node').forEach(b => b.onclick = () => {
     const w = WORLDS[+b.dataset.i];
     const at = p.lessons[w.id] ? 0 : (p.stepAt[w.id] || 0);
     location.hash = `#/lesson/${w.id}/${at}`;
   });
+
+  // Rita den slingrande stigen mellan stegen
+  const wrap = app.querySelector('.path-wrap');
+  const drawPath = () => {
+    const box = wrap.getBoundingClientRect();
+    const pts = [...wrap.querySelectorAll('.node')].map(n => {
+      const r = n.getBoundingClientRect();
+      return [r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top];
+    });
+    const d = pts.map((q, i) => {
+      if (!i) return `M${q[0]},${q[1]}`;
+      const p0 = pts[i - 1], dy = (q[1] - p0[1]) / 2;
+      return `C${p0[0]},${p0[1] + dy} ${q[0]},${q[1] - dy} ${q[0]},${q[1]}`;
+    });
+    const svg = wrap.querySelector('.path-line');
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    svg.querySelector('.track').setAttribute('d', d.join(' '));
+    svg.querySelector('.trail').setAttribute('d', d.slice(0, Math.max(1, doneCount + 1)).join(' '));
+  };
+  const ro = new ResizeObserver(drawPath);
+  ro.observe(wrap);
+  cleanups.push(() => ro.disconnect());
 }
 
 // ---------- Lektion ----------
@@ -322,33 +405,34 @@ function renderLesson(wid, n) {
   const last = n === w.steps.length - 1;
 
   app.innerHTML = `
-    <div class="screen lesson" style="--wc:${w.color}">
-      <header class="topbar">
-        <a class="back" href="#/map">✕</a>
-        <div class="dots">${w.steps.map((_, i) => `<span class="${i < n ? 'done' : i === n ? 'cur' : ''}"></span>`).join('')}</div>
-        <span class="wtag">${w.emoji}</span>
-      </header>
+    <div class="screen lesson">
+      ${topbar({ middle: progressBar(n, w.steps.length), right: `<span class="world-chip">${glyph(w.id)}</span>` })}
       <div class="lesson-body ${step.cube ? 'has-cube' : 'no-cube'}">
-        ${step.cube ? '<div class="lesson-cube"></div>' : `<div class="lesson-art">${step.practice ? '🙌' : w.emoji}</div>`}
-        <div class="lesson-text">
-          <h2>${step.title} <button class="say" aria-label="Läs upp">🔊</button></h2>
-          <p>${step.text}</p>
-          ${step.practice ? '<button class="btn primary huge done-btn">Jag klarade det! 🎉</button>' : ''}
+        ${step.cube
+          ? '<div class="panel cube-panel"></div>'
+          : `<div class="panel art-panel ${step.practice ? 'practice' : ''}">${step.practice ? icon('hand', 'art') : glyph(w.id, 'art')}</div>`}
+        <div class="panel text-panel">
+          <p class="eyebrow">Steg ${wi} · ${esc(w.title)}</p>
+          <h2>${step.title}</h2>
+          <div class="lesson-text">${step.text}</div>
+          <button class="say" aria-label="Läs upp">${icon('sound')} Läs upp</button>
+          ${step.practice ? `<button class="btn primary huge done-btn">${icon('check')} Jag klarade det!</button>` : ''}
         </div>
       </div>
       <footer class="navbar">
-        <button class="btn ghost prev" ${n === 0 ? 'disabled' : ''}>◀ Tillbaka</button>
-        ${last && step.practice ? '' : `<button class="btn primary next">${last ? 'Klar! 🎉' : 'Nästa ▶'}</button>`}
+        <button class="icon-btn big prev" ${n === 0 ? 'disabled' : ''} aria-label="Tillbaka">${icon('back')}</button>
+        ${last && step.practice ? '' : `<button class="btn primary next">${last ? 'Klar' : 'Nästa'} ${icon(last ? 'check' : 'next')}</button>`}
       </footer>
     </div>`;
 
-  if (step.cube) createPlayer(app.querySelector('.lesson-cube'), step.cube);
+  if (step.cube) createPlayer(app.querySelector('.cube-panel'), step.cube);
   app.querySelector('.say').onclick = () => speak(step.title + '. ' + step.text);
   app.querySelector('.prev').onclick = () => { location.hash = `#/lesson/${w.id}/${n - 1}`; };
+  const go = () => last ? completeWorld(w) : (location.hash = `#/lesson/${w.id}/${n + 1}`);
   const next = app.querySelector('.next');
-  if (next) next.onclick = () => last ? completeWorld(w) : (location.hash = `#/lesson/${w.id}/${n + 1}`);
+  if (next) next.onclick = go;
   const done = app.querySelector('.done-btn');
-  if (done) done.onclick = () => last ? completeWorld(w) : (location.hash = `#/lesson/${w.id}/${n + 1}`);
+  if (done) done.onclick = go;
 }
 
 function completeWorld(w) {
@@ -359,12 +443,12 @@ function completeWorld(w) {
   save();
   confetti();
   const buttons = [['Till kartan', () => { location.hash = '#/map'; }, hasQuiz(w) ? 'ghost' : 'primary']];
-  if (hasQuiz(w)) buttons.push(['Gör quizet ❓', () => { location.hash = `#/quiz/${w.id}`; }, 'primary']);
+  if (hasQuiz(w)) buttons.push([`${icon('question')} Gör quizet`, () => { location.hash = `#/quiz/${w.id}`; }, 'primary']);
   modal(`
-    <div class="badge-big">${w.badge}</div>
-    <h2>${first ? 'Nytt märke!' : 'Bra jobbat!'}</h2>
+    <div class="medal">${glyph(w.id)}</div>
+    <h2>${first ? 'Steget klart!' : 'Bra jobbat!'}</h2>
     <p>Du klarade <b>${esc(w.title)}</b>.</p>
-    ${coreCases(w).length ? '<p>Öva algoritmerna i <b>🎯 Träna</b> för att få alla stjärnor.</p>' : ''}`,
+    ${coreCases(w).length ? '<p class="muted">Öva algoritmerna under Träna för att få alla stjärnor.</p>' : ''}`,
   buttons);
 }
 
@@ -385,17 +469,14 @@ function renderQuiz(wid) {
     const setup = invertAlg(parseAlg(c.alg));
     if (w.auf) setup.push(...parseAlg(['', 'U', 'U2', "U'"][Math.floor(Math.random() * 4)]));
     app.innerHTML = `
-      <div class="screen quiz" style="--wc:${w.color}">
-        <header class="topbar">
-          <a class="back" href="#/map">✕</a>
-          <div class="dots">${Array.from({ length: total }, (_, i) => `<span class="${i < q ? 'done' : i === q ? 'cur' : ''}"></span>`).join('')}</div>
-          <span class="wtag">❓</span>
-        </header>
+      <div class="screen quiz">
+        ${topbar({ middle: progressBar(q, total), right: `<span class="world-chip">${icon('question')}</span>` })}
         <div class="quiz-body">
+          <p class="eyebrow">Quiz · ${esc(w.title)}</p>
           <h2>${esc(w.caseIntro || 'Vilket fall är det?')}</h2>
-          <div class="quiz-cube"></div>
+          <div class="panel cube-panel quiz-cube"></div>
           <div class="answers">${shuffle(cases).map(o => `<button class="btn answer" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
-          <p class="feedback"></p>
+          <div class="feedback"></div>
         </div>
       </div>`;
     createPlayer(app.querySelector('.quiz-cube'), { setupTokens: setup, mask: c.mask });
@@ -408,8 +489,9 @@ function renderQuiz(wid) {
         else if (x === b) x.classList.add('wrong');
       });
       const fb = app.querySelector('.feedback');
-      fb.innerHTML = (ok ? 'Rätt! 🎉' : `Nästan! Det var <b>${esc(c.name)}</b>.`) +
-        `<br><span class="alg">${esc(c.alg)}</span><br><button class="btn primary nextq">Nästa ▶</button>`;
+      fb.innerHTML = `<p class="fb-title ${ok ? 'ok' : ''}">${ok ? `${icon('check')} Rätt!` : `Nästan! Det var <b>${esc(c.name)}</b>.`}</p>
+        <code class="alg">${esc(c.alg)}</code>
+        <button class="btn primary nextq">Nästa ${icon('next')}</button>`;
       fb.querySelector('.nextq').onclick = () => { q++; ask(); };
     });
   };
@@ -419,13 +501,13 @@ function renderQuiz(wid) {
     if (score > (p.quiz[w.id] || 0)) { p.quiz[w.id] = score; save(); }
     if (score >= 0.8) confetti();
     app.innerHTML = `
-      <div class="screen quiz-done">
-        <div class="badge-big">${score >= 0.8 ? '🌟' : '💪'}</div>
+      <div class="screen center-screen">
+        <div class="medal big">${score >= 0.8 ? icon('star') : glyph(w.id)}</div>
         <h2>${right} av ${total} rätt</h2>
-        <p>${score >= 0.8 ? 'Superbra! Du fick en stjärna till.' : 'Bra försök! Klarar du 4 av 5 får du en stjärna.'}</p>
+        <p class="muted">${score >= 0.8 ? 'Superbra! Du fick en stjärna till.' : 'Bra försök! Klarar du 4 av 5 får du en stjärna.'}</p>
         <div class="row">
           <a class="btn ghost" href="#/map">Till kartan</a>
-          <button class="btn primary again">Igen! 🔁</button>
+          <button class="btn primary again">${icon('restart')} Igen</button>
         </div>
       </div>`;
     app.querySelector('.again').onclick = () => { q = 0; right = 0; ask(); };
@@ -441,10 +523,10 @@ function renderTrainer() {
   const pool = ALL_CASES.filter(c => db.unlockAll || p.lessons[c.world]);
   if (!pool.length) {
     app.innerHTML = `
-      <div class="screen empty">
-        <div class="badge-big">🎯</div>
+      <div class="screen center-screen">
+        <div class="medal big">${icon('lock')}</div>
         <h2>Träningen är låst</h2>
-        <p>Klara världen <b>Mittenvåningen</b> först – då finns det algoritmer att träna på.</p>
+        <p class="muted">Klara steget <b>Mittenvåningen</b> först – då finns det algoritmer att träna på.</p>
         <a class="btn primary" href="#/map">Till kartan</a>
       </div>`;
     return;
@@ -467,26 +549,22 @@ function renderTrainer() {
     const w = WORLDS[worldIndex(c.world)];
     const box = p.boxes[c.id] || 0;
     app.innerHTML = `
-      <div class="screen trainer" style="--wc:${w.color}">
-        <header class="topbar">
-          <a class="back" href="#/map">✕</a>
-          <span class="title">🎯 Träna</span>
-          <span class="wtag">${w.emoji}</span>
-        </header>
-        <div class="trainer-body">
-          <div class="trainer-cube"></div>
-          <div class="trainer-side">
-            <p class="world-name">${esc(w.title)}</p>
+      <div class="screen trainer">
+        ${topbar({ middle: `<span class="topbar-title">${icon('target')} Träna</span>`, right: `<span class="world-chip">${glyph(w.id)}</span>` })}
+        <div class="split">
+          <div class="panel cube-panel trainer-cube"></div>
+          <div class="panel text-panel trainer-side">
+            <p class="eyebrow">${esc(w.title)}</p>
             <h2 class="case-name">Vad gör du här?</h2>
-            <div class="level">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= box ? 'on' : ''}"></span>`).join('')}</div>
-            <p class="hint">Gör det på din kub, eller tänk efter. Tryck sedan på knappen.</p>
-            <button class="btn primary huge reveal">Visa lösningen 👀</button>
+            <div class="level" aria-label="Nivå ${box} av 5">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= box ? 'on' : ''}"></span>`).join('')}</div>
+            <p class="hint muted">Gör det på din kub, eller tänk efter. Tryck sedan på knappen.</p>
+            <button class="btn primary huge reveal">${icon('eye')} Visa lösningen</button>
             <div class="rate hidden">
-              <p>Hur gick det?</p>
-              <div class="row">
-                <button class="btn r0">😅 Svårt</button>
-                <button class="btn r1">🙂 Okej</button>
-                <button class="btn r2">😎 Lätt</button>
+              <p class="rate-label">Hur gick det?</p>
+              <div class="rate-row">
+                <button class="btn rate-btn r0"><span class="dot hard"></span>Svårt</button>
+                <button class="btn rate-btn r1"><span class="dot mid"></span>Okej</button>
+                <button class="btn rate-btn r2"><span class="dot easy"></span>Lätt</button>
               </div>
             </div>
           </div>
@@ -495,9 +573,9 @@ function renderTrainer() {
     const cubeHost = app.querySelector('.trainer-cube');
     createPlayer(cubeHost, { setupInv: c.alg, mask: c.mask });
     app.querySelector('.reveal').onclick = e => {
-      e.target.remove();
-      app.querySelector('.case-name').innerHTML = `${esc(c.name)}<br><span class="alg">${esc(c.alg)}</span>`;
-      app.querySelector('.hint').textContent = 'Tryck ▶ för att se den på kuben.';
+      e.currentTarget.remove();
+      app.querySelector('.case-name').innerHTML = `${esc(c.name)}<code class="alg">${esc(c.alg)}</code>`;
+      app.querySelector('.hint').textContent = 'Tryck på spela för att se den på kuben.';
       app.querySelector('.rate').classList.remove('hidden');
       clearViews();
       createPlayer(cubeHost, { setupInv: c.alg, alg: c.alg, mask: c.mask });
@@ -531,17 +609,13 @@ function renderTimer() {
 
   app.innerHTML = `
     <div class="screen timer-screen">
-      <header class="topbar">
-        <a class="back" href="#/map">✕</a>
-        <span class="title">⏱️ Tidtagning</span>
-        <span class="wtag">${p.avatar}</span>
-      </header>
-      <div class="scramble-box">
-        <p class="small">Blanda din kub (gul upp, grön fram):</p>
+      ${topbar({ middle: `<span class="topbar-title">${icon('timer')} Tidtagning</span>`, right: pAvatar(p, 'sm') })}
+      <div class="panel scramble-box">
+        <p class="eyebrow">Blanda din kub – gul upp, grön fram</p>
         <div class="chips scramble"></div>
         <div class="row">
-          <button class="btn ghost newscr">🔀 Ny blandning</button>
-          <button class="btn ghost showcube">🧊 Visa på kuben</button>
+          <button class="btn ghost small newscr">${icon('shuffle')} Ny blandning</button>
+          <button class="btn ghost small showcube">${icon('eye')} Visa på kuben</button>
         </div>
         <div class="scramble-cube hidden"></div>
       </div>
@@ -574,8 +648,8 @@ function renderTimer() {
         <div><small>Snitt av 5</small><b>${avg ? fmt(avg) : '–'}</b></div>
         <div><small>Lösningar</small><b>${p.times.length}</b></div>
       </div>
-      <ol class="time-list">${times.map(t => `<li class="${t.ms === best ? 'best' : ''}">${fmt(t.ms)}${t.ms === best ? ' ⭐' : ''}</li>`).join('')}</ol>
-      ${times.length ? '<button class="btn ghost small del">Ta bort senaste</button>' : ''}`;
+      <ol class="time-list">${times.map(t => `<li class="${t.ms === best ? 'best' : ''}">${t.ms === best ? icon('star') : ''}${fmt(t.ms)}</li>`).join('')}</ol>
+      ${times.length ? `<button class="btn ghost small del">${icon('trash')} Ta bort senaste</button>` : ''}`;
     const del = app.querySelector('.del');
     if (del) del.onclick = () => { p.times.pop(); save(); drawTimes(); };
   };
@@ -623,19 +697,24 @@ function renderTimer() {
   pad.addEventListener('pointerup', release);
   pad.addEventListener('pointercancel', release);
   const key = e => {
-    if (e.code !== 'Space' || location.hash !== '#/timer') return;
+    if (e.code !== 'Space') return;
     e.preventDefault();
     if (e.type === 'keydown' && !e.repeat) press();
     if (e.type === 'keyup') release();
   };
-  document.onkeydown = key;
-  document.onkeyup = key;
+  document.addEventListener('keydown', key);
+  document.addEventListener('keyup', key);
+  cleanups.push(() => {
+    cancelAnimationFrame(raf);
+    document.removeEventListener('keydown', key);
+    document.removeEventListener('keyup', key);
+  });
 
   app.querySelector('.newscr').onclick = () => { scramble = randomScramble(20); drawScramble(); };
   app.querySelector('.showcube').onclick = e => {
     showCube = !showCube;
     cubeHost.classList.toggle('hidden', !showCube);
-    e.target.textContent = showCube ? '🙈 Dölj kuben' : '🧊 Visa på kuben';
+    e.currentTarget.innerHTML = showCube ? `${icon('eyeOff')} Dölj kuben` : `${icon('eye')} Visa på kuben`;
     if (showCube) drawScramble(); else clearViews();
   };
   drawScramble();
@@ -650,11 +729,11 @@ function renderParent() {
   if (!parentOk) {
     const a = 6 + Math.floor(Math.random() * 4), b = 6 + Math.floor(Math.random() * 4);
     app.innerHTML = `
-      <div class="screen empty">
-        <div class="badge-big">👪</div>
+      <div class="screen center-screen">
+        <div class="medal big">${icon('users')}</div>
         <h2>För föräldrar</h2>
-        <p>Vad är ${a} × ${b}?</p>
-        <input class="name-input gate" inputmode="numeric" autocomplete="off">
+        <p class="muted">Vad är ${a} × ${b}?</p>
+        <input class="field gate" inputmode="numeric" autocomplete="off">
         <div class="row"><a class="btn ghost" href="#/">Tillbaka</a><button class="btn primary go">OK</button></div>
       </div>`;
     const go = () => {
@@ -668,39 +747,39 @@ function renderParent() {
 
   app.innerHTML = `
     <div class="screen parent">
-      <header class="topbar">
-        <a class="back" href="#/">✕</a>
-        <span class="title">👪 Föräldraöversikt</span>
-        <span></span>
-      </header>
-      ${db.profiles.length ? '' : '<p>Inga profiler än.</p>'}
+      ${topbar({ back: '#/', middle: `<span class="topbar-title">${icon('users')} Föräldraöversikt</span>` })}
+      ${db.profiles.length ? '' : '<p class="muted">Inga profiler än.</p>'}
       ${db.profiles.map(p => {
         const best = p.times.length ? fmt(Math.min(...p.times.map(t => t.ms))) : '–';
         const week = p.times.filter(t => t.at > Date.now() - 7 * 864e5).length;
         const mastered = ALL_CASES.filter(c => (p.boxes[c.id] || 0) >= 3).length;
         return `
-        <section class="pcard">
-          <h3>${p.avatar} ${esc(p.name)}</h3>
+        <section class="panel pcard">
+          <h3>${pAvatar(p, 'sm')} ${esc(p.name)}</h3>
+          <div class="pstats">
+            <div><small>Algoritmer som sitter</small><b>${mastered} / ${ALL_CASES.length}</b></div>
+            <div><small>Bästa tid</small><b>${best}</b></div>
+            <div><small>Lösningar, 7 dagar</small><b>${week}</b></div>
+          </div>
           <table>
-            ${WORLDS.map(w => `<tr><td>${w.emoji} ${esc(w.title)}</td><td>${starText(stars(p, w))}</td>
-              <td>${hasQuiz(w) && p.quiz[w.id] != null ? `Quiz ${Math.round(p.quiz[w.id] * 100)}%` : ''}</td></tr>`).join('')}
+            ${WORLDS.map((w, i) => `<tr><td><span class="tglyph">${glyph(w.id)}</span>${i}. ${esc(w.title)}</td><td>${starsHtml(stars(p, w))}</td>
+              <td>${hasQuiz(w) && p.quiz[w.id] != null ? `Quiz ${Math.round(p.quiz[w.id] * 100)} %` : ''}</td></tr>`).join('')}
           </table>
-          <p>Algoritmer som sitter: <b>${mastered} / ${ALL_CASES.length}</b> · Bästa tid: <b>${best}</b> · Lösningar senaste veckan: <b>${week}</b></p>
-          <div class="row">
-            <button class="btn ghost small reset" data-id="${p.id}">Nollställ framsteg</button>
-            <button class="btn ghost small delete" data-id="${p.id}">Ta bort profil</button>
+          <div class="row start">
+            <button class="btn ghost small reset" data-id="${p.id}">${icon('restart')} Nollställ framsteg</button>
+            <button class="btn ghost small delete" data-id="${p.id}">${icon('trash')} Ta bort profil</button>
           </div>
         </section>`;
       }).join('')}
-      <section class="pcard">
-        <label class="toggle"><input type="checkbox" class="unlock" ${db.unlockAll ? 'checked' : ''}> Lås upp alla världar</label>
-        <p class="small">Sparas bara i den här enheten/webbläsaren.</p>
+      <section class="panel pcard">
+        <label class="toggle"><input type="checkbox" class="unlock" ${db.unlockAll ? 'checked' : ''}><span class="switch"></span> Lås upp alla steg</label>
+        <p class="muted small">Sparas bara i den här enheten/webbläsaren.</p>
       </section>
     </div>`;
   app.querySelector('.unlock').onchange = e => { db.unlockAll = e.target.checked; save(); };
   app.querySelectorAll('.reset').forEach(b => b.onclick = () => {
     const p = db.profiles.find(x => x.id === b.dataset.id);
-    modal(`<h2>Nollställa ${esc(p.name)}?</h2><p>Alla stjärnor, märken och tider försvinner.</p>`,
+    modal(`<h2>Nollställa ${esc(p.name)}?</h2><p class="muted">Alla stjärnor och tider försvinner.</p>`,
       [['Avbryt', null, 'ghost'], ['Nollställ', () => {
         Object.assign(p, newProfile(p.name, p.avatar), { id: p.id });
         save(); renderParent();
@@ -708,7 +787,7 @@ function renderParent() {
   });
   app.querySelectorAll('.delete').forEach(b => b.onclick = () => {
     const p = db.profiles.find(x => x.id === b.dataset.id);
-    modal(`<h2>Ta bort ${esc(p.name)}?</h2><p>Profilen och alla framsteg försvinner.</p>`,
+    modal(`<h2>Ta bort ${esc(p.name)}?</h2><p class="muted">Profilen och alla framsteg försvinner.</p>`,
       [['Avbryt', null, 'ghost'], ['Ta bort', () => {
         db.profiles = db.profiles.filter(x => x.id !== p.id);
         if (db.current === p.id) db.current = null;
@@ -718,6 +797,17 @@ function renderParent() {
 }
 
 // ---------- Start ----------
+
+// Äldre profiler (emoji-avatarer) får en form istället – sparas så att den blir stabil.
+let migrated = false;
+for (const p of db.profiles) {
+  if (!/^s\d+c\d+$/.test(p.avatar || '')) {
+    const { s, c } = parseAvatar(p.avatar, p.id);
+    p.avatar = `s${s}c${c}`;
+    migrated = true;
+  }
+}
+if (migrated) save();
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});

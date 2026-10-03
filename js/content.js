@@ -6,21 +6,22 @@
 const DAISY = 'L2 U R2 F2 U B2';
 const DAISY_SIMPLE = 'F2 R2 B2 L2';
 const DANCE = "R U R' U'";
+const sw = face => `<i class="sw sw-${face}"></i>`; // liten färgruta i texten
 
 export const WORLDS = [
   {
-    id: 'w0', emoji: '🧊', badge: '🔍', color: '#7c4dff',
+    id: 'w0',
     title: 'Lär känna kuben',
     short: 'Bitar, färger och kubens språk',
     steps: [
       {
-        title: 'Hej kubare! 👋',
+        title: 'Hej kubare!',
         text: 'Här lär du dig lösa Rubiks kub med <b>CFOP</b> – samma metod som världens snabbaste kubare använder. Vi tar det ett litet steg i taget.<br><br>Dra med fingret på kuben för att snurra den. Tryck två gånger snabbt för att ställa tillbaka den.',
         cube: { mask: 'full' },
       },
       {
         title: 'Mittbitarna flyttar aldrig',
-        text: 'Mitten på varje sida sitter fast. Den bestämmer vilken färg sidan ska ha.<br><br>🟡 Gul är mittemot ⚪ vit.<br>🟢 Grön är mittemot 🔵 blå.<br>🔴 Röd är mittemot 🟠 orange.',
+        text: `Mitten på varje sida sitter fast. Den bestämmer vilken färg sidan ska ha.<br><br>${sw('U')} Gul är mittemot ${sw('D')} vit.<br>${sw('F')} Grön är mittemot ${sw('B')} blå.<br>${sw('L')} Röd är mittemot ${sw('R')} orange.`,
         cube: { mask: 'centers' },
       },
       {
@@ -44,14 +45,14 @@ export const WORLDS = [
         cube: { mask: 'full', pad: true },
       },
       {
-        title: 'Dansen 💃',
+        title: 'Dansen',
         text: `Det viktigaste draget i hela metoden är <b>Dansen</b>: <b>${DANCE}</b><br><br>Höger upp, toppen åt vänster, höger ner, toppen åt höger. Gör den med högerhanden tills den går av sig själv.<br><br>Kul grej: gör Dansen 6 gånger så är kuben tillbaka där den började!`,
         cube: { mask: 'full', alg: `${DANCE} ${DANCE} ${DANCE} ${DANCE} ${DANCE} ${DANCE}` },
       },
     ],
   },
   {
-    id: 'w1', emoji: '🌼', badge: '🌼', color: '#ff9800',
+    id: 'w1',
     title: 'Prästkragen',
     short: 'Fyra vita kanter runt den gula mitten',
     steps: [
@@ -62,7 +63,7 @@ export const WORLDS = [
       },
       {
         title: 'Vit kant i mitten-våningen',
-        text: 'Hittar du en vit kant i mitten-våningen? Vrid den sidan så att kanten åker upp, med vitt uppåt.<br><br>⚠️ Akta så att du inte knuffar ner ett kronblad du redan satt dit. Vrid toppen först så att platsen ovanför är tom.',
+        text: 'Hittar du en vit kant i mitten-våningen? Vrid den sidan så att kanten åker upp, med vitt uppåt.<br><br><b>Akta</b> så att du inte knuffar ner ett kronblad du redan satt dit. Vrid toppen först så att platsen ovanför är tom.',
         cube: { setup: `${DAISY_SIMPLE} R'`, alg: 'R', mask: 'daisy' },
       },
       {
@@ -76,14 +77,14 @@ export const WORLDS = [
         cube: { setup: `${DAISY_SIMPLE} R' U F'`, alg: "F U' R", mask: 'daisy' },
       },
       {
-        title: 'Din tur! 🌼',
+        title: 'Din tur!',
         text: 'Blanda din riktiga kub och bygg en prästkrage. Det får ta tid – du klurar ut det!',
         practice: true,
       },
     ],
   },
   {
-    id: 'w2', emoji: '➕', badge: '⚪', color: '#00bcd4',
+    id: 'w2',
     title: 'Vita korset',
     short: 'Steg C i CFOP: Cross',
     steps: [
@@ -99,18 +100,18 @@ export const WORLDS = [
       },
       {
         title: 'Titta under',
-        text: 'Vänd på kuben och titta: ett vitt kors! Och sidorna på korset matchar mittbitarna. Det är <b>C</b> i CFOP. 🎉',
+        text: 'Vänd på kuben och titta: ett vitt kors! Och sidorna på korset matchar mittbitarna. Det är <b>C</b> i CFOP.',
         cube: { mask: 'cross', pitch: 35, yaw: -38 },
       },
       {
-        title: 'Din tur! ➕',
+        title: 'Din tur!',
         text: 'Blanda, gör prästkrage, och gör sedan det vita korset på din kub.',
         practice: true,
       },
     ],
   },
   {
-    id: 'w3', emoji: '🔺', badge: '🏁', color: '#e91e63',
+    id: 'w3',
     title: 'Vita hörnen',
     short: 'Den första våningen blir klar',
     steps: [
@@ -139,14 +140,14 @@ export const WORLDS = [
         text: 'Sitter ett vitt hörn i botten på fel plats eller vridet fel? Håll det nere till höger fram och gör Dansen <b>en gång</b>. Då hoppar det upp i toppen, och du kan börja om med det.',
       },
       {
-        title: 'Din tur! 🔺',
+        title: 'Din tur!',
         text: 'Gör kors och alla fyra vita hörn på din kub. Kolla att varje sida har ett litet "T" av samma färg.',
         practice: true,
       },
     ],
   },
   {
-    id: 'w4', emoji: '🧱', badge: '🧱', color: '#4caf50',
+    id: 'w4',
     title: 'Mittenvåningen',
     short: 'Två våningar klara (F2L, nybörjarstil)',
     caseIntro: 'Vilket håll ska kanten?',
@@ -161,12 +162,12 @@ export const WORLDS = [
         text: 'Hitta en kant i toppen som <b>inte</b> har gult. Vrid toppen tills kantens framfärg står ovanför samma mittfärg. Nu ser det ut som ett upp-och-ner-<b>T</b>.<br><br>Titta på kantens toppfärg: ska den till <b>höger</b> eller <b>vänster</b>?',
       },
       {
-        title: 'Till höger ➡️',
+        title: 'Till höger',
         text: 'Ska kanten till höger: <b>U R U\' R\' U\' F\' U F</b>',
         cube: { caseRef: 'mid_right' },
       },
       {
-        title: 'Till vänster ⬅️',
+        title: 'Till vänster',
         text: 'Ska kanten till vänster: <b>U\' L\' U L U F U\' F\'</b><br><br>Det är spegelbilden av höger.',
         cube: { caseRef: 'mid_left' },
       },
@@ -175,7 +176,7 @@ export const WORLDS = [
         text: 'Sitter en kant i mitten men vänd fel? Håll den framme till höger och gör "Till höger" en gång med vilken toppkant som helst. Då hoppar den upp, och du kan sätta in den rätt.',
       },
       {
-        title: 'Din tur! 🧱',
+        title: 'Din tur!',
         text: 'Lös de två första våningarna på din kub.',
         practice: true,
       },
@@ -186,7 +187,7 @@ export const WORLDS = [
     ],
   },
   {
-    id: 'w5', emoji: '⭐', badge: '➕', color: '#ffc107', auf: true,
+    id: 'w5', auf: true,
     title: 'Gula korset',
     short: 'Steg O del 1: kanterna gula',
     caseIntro: 'Vilket gult mönster är det?',
@@ -196,22 +197,22 @@ export const WORLDS = [
         text: 'Nu börjar <b>O</b> i CFOP: hela toppen ska bli gul. Först gör vi ett <b>gult kors</b>. Hörnen bryr vi oss inte om än.<br><br>Titta på toppen. Du ser en av tre bilder: en <b>prick</b>, ett <b>L</b> eller en <b>linje</b>.',
       },
       {
-        title: 'Linje ➖',
+        title: 'Linje',
         text: 'Håll linjen <b>vågrätt</b> (från vänster till höger) och gör:<br><b>F R U R\' U\' F\'</b><br><br>Fram – Dansen – Fram tillbaka!',
         cube: { caseRef: 'oll_line' },
       },
       {
-        title: 'L 📐',
+        title: 'L',
         text: 'Håll L:et så att det pekar <b>bakåt och åt vänster</b> (som klockan 9 och 12). Gör:<br><b>F U R U\' R\' F\'</b><br><br>Det är nästan som Linje, men Dansen går baklänges.',
         cube: { caseRef: 'oll_l' },
       },
       {
-        title: 'Prick ⚫',
+        title: 'Prick',
         text: 'Bara en gul prick i mitten? Gör <b>Linje</b>-algoritmen. Nu får du ett L! Vrid toppen så att L:et pekar bakåt och åt vänster, och gör <b>L</b>-algoritmen.',
         cube: { caseRef: 'oll_dot' },
       },
       {
-        title: 'Din tur! ⭐',
+        title: 'Din tur!',
         text: 'Gör det gula korset på din kub.',
         practice: true,
       },
@@ -223,7 +224,7 @@ export const WORLDS = [
     ],
   },
   {
-    id: 'w6', emoji: '🌞', badge: '🌞', color: '#ff5722', auf: true,
+    id: 'w6', auf: true,
     title: 'Gula toppen',
     short: 'Steg O del 2: hela toppen gul',
     caseIntro: 'Vilket fall är det?',
@@ -233,7 +234,7 @@ export const WORLDS = [
         text: 'Nu ska hörnen också bli gula på toppen. Vi använder en superalgoritm som heter <b>Sune</b>.',
       },
       {
-        title: 'Fisken 🐟 – Sune',
+        title: 'Fisken – Sune',
         text: 'Ser du en <b>fisk</b>? (Ett gult hörn på toppen och korset.) Håll fiskens huvud <b>nere till vänster</b>. Pekar det gula på hörnet framme till höger mot dig? Gör <b>Sune</b>:<br><b>R U R\' U R U2 R\'</b>',
         cube: { caseRef: 'sune' },
       },
@@ -244,11 +245,11 @@ export const WORLDS = [
       },
       {
         title: 'Ingen fisk? Gör Sune ändå!',
-        text: '<b>Inga</b> gula hörn på toppen? Vrid toppen tills hörnet framme till vänster har gult på <b>vänster</b> sida. Gör Sune.<br><br><b>Två</b> gula hörn på toppen? Vrid toppen tills hörnet framme till vänster har gult <b>framåt</b>, mot dig. Gör Sune.<br><br>Nu har du en fisk! 🐟<br>(Det finns snabbare knep för varje fall – de finns som bonus i Träningen.)',
+        text: '<b>Inga</b> gula hörn på toppen? Vrid toppen tills hörnet framme till vänster har gult på <b>vänster</b> sida. Gör Sune.<br><br><b>Två</b> gula hörn på toppen? Vrid toppen tills hörnet framme till vänster har gult <b>framåt</b>, mot dig. Gör Sune.<br><br>Nu har du en fisk!<br>(Det finns snabbare knep för varje fall – de finns som bonus i Träningen.)',
         cube: { setupInv: "R U R' U R U' R' U R U2 R'", alg: "R U R' U R U2 R'", mask: 'oll' },
       },
       {
-        title: 'Din tur! 🌞',
+        title: 'Din tur!',
         text: 'Gör hela toppen gul på din kub.',
         practice: true,
       },
@@ -264,7 +265,7 @@ export const WORLDS = [
     ],
   },
   {
-    id: 'w7', emoji: '🚦', badge: '🚦', color: '#3f51b5', auf: true,
+    id: 'w7', auf: true,
     title: 'Hörnen på plats',
     short: 'Steg P del 1: T-perm',
     steps: [
@@ -273,7 +274,7 @@ export const WORLDS = [
         text: 'Toppen är gul – nu ska bitarna på toppen flytta till rätt plats. Det är <b>P</b> i CFOP. Först hörnen!',
       },
       {
-        title: 'Strålkastare 🔦',
+        title: 'Strålkastare',
         text: 'Titta på sidorna av toppvåningen. Har två hörn på samma sida samma färg? Det kallas <b>strålkastare</b>.<br><br>Håll strålkastarna på <b>vänster</b> sida och gör <b>T-perm</b>:<br><b>R U R\' U\' R\' F R2 U\' R\' U\' R U R\' F\'</b><br><br>Den börjar med Dansen!',
         cube: { caseRef: 'tperm' },
       },
@@ -288,7 +289,7 @@ export const WORLDS = [
         text: 'När alla fyra hörnen har strålkastare: vrid toppen tills hörnen matchar sidorna.',
       },
       {
-        title: 'Din tur! 🚦',
+        title: 'Din tur!',
         text: 'Sätt hörnen på plats på din kub.',
         practice: true,
       },
@@ -298,7 +299,7 @@ export const WORLDS = [
     ],
   },
   {
-    id: 'w8', emoji: '🏆', badge: '🏆', color: '#9c27b0', auf: true,
+    id: 'w8', auf: true,
     title: 'Kanterna på plats',
     short: 'Steg P del 2: kuben löst!',
     caseIntro: 'Vilken algoritm behövs?',
@@ -323,7 +324,7 @@ export const WORLDS = [
         cube: { caseRef: 'h' },
       },
       {
-        title: 'Du kan lösa kuben! 🏆',
+        title: 'Du kan lösa kuben!',
         text: 'Blanda din kub och lös den från början till slut: prästkrage, kors, hörn, mitten, gult kors, gul topp, hörn och kanter.<br><br>Du har lärt dig CFOP!',
         practice: true,
       },
@@ -336,7 +337,7 @@ export const WORLDS = [
     ],
   },
   {
-    id: 'w9', emoji: '🚀', badge: '🚀', color: '#009688',
+    id: 'w9',
     title: 'Bonus: Riktig F2L',
     short: 'Hörn och kant samtidigt – som proffsen',
     caseIntro: 'Vilken insättning passar?',
@@ -367,7 +368,7 @@ export const WORLDS = [
         cube: { caseRef: 'f2l_4' },
       },
       {
-        title: 'Din tur! 🚀',
+        title: 'Din tur!',
         text: 'Prova att lösa två våningar med par i stället för steg för steg. Det känns svårt först – men blir snabbt!',
         practice: true,
       },
@@ -383,5 +384,3 @@ export const WORLDS = [
 
 export const ALL_CASES = WORLDS.flatMap(w => (w.cases || []).map(c => ({ ...c, world: w.id })));
 export const caseById = id => ALL_CASES.find(c => c.id === id);
-
-export const AVATARS = ['🦊', '🐼', '🐸', '🦄', '🐯', '🐙', '🦖', '🐧', '🐝', '🐬', '🦁', '🐨'];
