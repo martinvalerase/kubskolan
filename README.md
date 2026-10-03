@@ -12,13 +12,25 @@ Open http://localhost:8765/
 
 ## Put it on the iPad / phones
 
-The app is just static files, so any static host works. Easiest without installing anything:
+The app is hosted on GitHub Pages: **https://martinvalerase.github.io/kubskolan/**
 
-1. Go to https://app.netlify.com/drop and drag the `kubskolan` folder onto the page (free account).
-2. Open the URL you get in Safari on the iPad.
-3. Share → **Lägg till på hemskärmen**. It now opens full screen like an app and works offline.
+1. Open the URL in Safari on the iPad.
+2. Share → **Lägg till på hemskärmen**. It now opens full screen like an app and works offline.
 
-(GitHub Pages or Cloudflare Pages work just as well.)
+### Deploying changes
+
+1. Edit the files.
+2. Bump `VERSION` in `sw.js`.
+3. Commit and push:
+   ```
+   git add .
+   git commit -m "Describe the change"
+   git push
+   ```
+
+Pages redeploys in about a minute. Installed apps get the update the next time they're opened online.
+
+(Any static host works too, e.g. drag the folder onto https://app.netlify.com/drop.)
 
 Progress is stored per device in the browser (localStorage). Each child gets their own profile on the device.
 
