@@ -32,6 +32,24 @@ Pages redeploys in about a minute. Installed apps get the update the next time t
 
 (Any static host works too, e.g. drag the folder onto https://app.netlify.com/drop.)
 
+## Deploy to the VPS (https://kubskolan.se)
+
+Every push to `main` also deploys to the one.com VPS. The workflow is `.github/workflows/deploy-vps.yml`: GitHub Actions rsyncs the site over SSH to `/var/www/kubskolan`, and Caddy serves it with automatic HTTPS.
+
+Repo secrets used by the workflow:
+
+| Secret | Value |
+|---|---|
+| `VPS_HOST` | `kubskolan.se` |
+| `VPS_KNOWN_HOSTS` | output of `ssh-keyscan kubskolan.se` |
+| `VPS_SSH_KEY` | private half of the dedicated deploy key (user `deploy` on the server) |
+
+Server setup (once, as root on a fresh Ubuntu/Debian VPS, after DNS points to it):
+```
+curl -fsSL https://raw.githubusercontent.com/martinvalerase/kubskolan/main/deploy/setup-server.sh | bash -s -- "<deploy public key>"
+```
+The script is safe to re-run. Run a deploy manually with `gh workflow run deploy-vps.yml`.
+
 Progress is stored per device in the browser (localStorage). Each child gets their own profile on the device.
 
 ## Structure
