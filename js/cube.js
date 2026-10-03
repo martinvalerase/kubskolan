@@ -74,6 +74,30 @@ export function moveHint(t) {
   return { arrow: t.amount === 2 ? arrow + arrow : arrow, name: NAMES[t.base] + (t.amount === 2 ? ' två gånger' : '') };
 }
 
+// Instruktion i klartext för "Följ med"-läget, t.ex. "Vrid HÖGER sida UPP".
+const INSTR = {
+  R: ['HÖGER sida', 'UPP', 'NER'], L: ['VÄNSTER sida', 'NER', 'UPP'],
+  U: ['TOPPEN', 'åt VÄNSTER', 'åt HÖGER'], D: ['BOTTEN', 'åt HÖGER', 'åt VÄNSTER'],
+  F: ['FRAMSIDAN', 'medurs, som klockan', 'moturs, baklänges mot klockan'],
+  B: ['BAKSIDAN', 'medurs sett bakifrån', 'moturs sett bakifrån'],
+  M: ['MITTEN', 'NER', 'UPP'], E: ['MITTENVÅNINGEN', 'åt HÖGER', 'åt VÄNSTER'], S: ['MITTSKIVAN', 'medurs', 'moturs'],
+  r: ['HÖGER sida och mitten', 'UPP', 'NER'], l: ['VÄNSTER sida och mitten', 'NER', 'UPP'],
+  u: ['TOPPEN och mitten', 'åt VÄNSTER', 'åt HÖGER'], d: ['BOTTEN och mitten', 'åt HÖGER', 'åt VÄNSTER'],
+  f: ['FRAMSIDAN och mitten', 'medurs, som klockan', 'moturs'], b: ['BAKSIDAN och mitten', 'medurs sett bakifrån', 'moturs sett bakifrån'],
+  x: ['HELA kuben', 'framåt och upp', 'bakåt och ner'], y: ['HELA kuben', 'åt VÄNSTER', 'åt HÖGER'], z: ['HELA kuben', 'medurs', 'moturs'],
+};
+export function moveInstruction(t) {
+  const [what, cw, ccw] = INSTR[t.base];
+  return t.amount === 2 ? `Vrid ${what} två gånger` : `Vrid ${what} ${t.amount === 1 ? cw : ccw}`;
+}
+
+// "DFR" -> [1,-1,1]: en bits hemposition skriven med sidbokstäver
+export function posFromName(name) {
+  const p = [0, 0, 0];
+  for (const ch of name) { const d = DIRS[ch]; d.forEach((v, i) => { if (v) p[i] = v; }); }
+  return p;
+}
+
 export function randomScramble(len = 20) {
   const faces = ['U', 'D', 'R', 'L', 'F', 'B'];
   const axis = { U: 1, D: 1, R: 0, L: 0, F: 2, B: 2 };
@@ -181,6 +205,12 @@ export class CubeView {
   }
 
   setMask(mask) { this.mask = mask; this.paint(); }
+
+  // Markerar bitar (angivna med hemposition, t.ex. "DFR"). Markeringen följer med biten när den flyttas.
+  setHighlight(names = []) {
+    const homes = names.map(posFromName);
+    for (const c of this.cubies) c.el.classList.toggle('hl', homes.some(h => h.every((v, i) => v === c.home[i])));
+  }
 
   paint() {
     const maskFn = MASKS[this.mask] || MASKS.full;

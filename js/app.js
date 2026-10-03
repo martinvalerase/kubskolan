@@ -1,4 +1,5 @@
-import { CubeView, parseAlg, invertAlg, moveHint, randomScramble } from './cube.js';
+import { CubeView, parseAlg, invertAlg, moveHint, moveInstruction, randomScramble } from './cube.js';
+import { topView } from './diagram.js';
 import { WORLDS, ALL_CASES, caseById } from './content.js';
 import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES } from './icons.js';
 
@@ -132,30 +133,46 @@ const progressBar = (done, total) =>
 
 // ---------- Kubspelare ----------
 
-const PAD = ['R', "R'", 'L', "L'", 'U', "U'", 'D', "D'", 'F', "F'"];
+const PAD = ['R', "R'", 'U', "U'", 'F', "F'"];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// cfg: { setup, setupInv, setupTokens, alg, mask, pad, pitch, yaw, caseRef }
+function chip(t, k, done) {
+  const h = moveHint(t);
+  return `<span class="chip ${k < done ? 'done' : k === done ? 'cur' : ''}" title="${esc(h.name)}"><b>${esc(t.text)}</b><i>${h.arrow}</i></span>`;
+}
+
+// cfg: { setup, setupInv, setupTokens, alg, parts: [{name, alg}], mask, pad, challenges: [{q, a}],
+//        highlight: ['DFR', …], pitch, yaw, caseRef }
 function createPlayer(host, cfg) {
   if (cfg.caseRef) {
     const c = caseById(cfg.caseRef);
-    cfg = { ...cfg, setupInv: c.alg, alg: c.alg, mask: c.mask };
+    cfg = { setupInv: c.alg, alg: c.alg, mask: c.mask, ...cfg };
   }
-  const tokens = parseAlg(cfg.alg || '');
+  // En algoritm kan delas i namngivna delar; delarna tillsammans är hela algoritmen.
+  const parts = cfg.parts || (cfg.alg ? [{ name: '', alg: cfg.alg }] : []);
+  const tokens = parts.flatMap((p, pi) => parseAlg(p.alg).map(t => ({ ...t, part: pi })));
+  const named = parts.some(p => p.name);
   const setup = cfg.setupTokens || (cfg.setupInv ? invertAlg(parseAlg(cfg.setupInv)) : parseAlg(cfg.setup || ''));
+  const padMoves = Array.isArray(cfg.pad) ? cfg.pad : PAD;
+  const challenges = cfg.challenges || [];
 
   host.innerHTML = `
     <div class="player">
       <div class="cube-box"></div>
       ${tokens.length ? `
-        <div class="chips"></div>
+        <div class="chips-wrap"></div>
+        <div class="follow hidden" aria-live="polite"></div>
         <div class="controls">
           <button class="ctl" data-a="reset" aria-label="Börja om">${icon('restart')}</button>
           <button class="ctl" data-a="back" aria-label="Ett drag bakåt">${icon('stepB')}</button>
           <button class="ctl play" data-a="play" aria-label="Spela">${icon('play')}</button>
           <button class="ctl" data-a="fwd" aria-label="Ett drag framåt">${icon('stepF')}</button>
           <button class="ctl speed" data-a="speed" aria-label="Långsamt">½×</button>
+          <button class="ctl follow-btn" data-a="follow" aria-label="Följ med på din kub">${icon('hand')}<span>Följ med</span></button>
         </div>` : ''}
-      ${cfg.pad ? `<div class="pad">${PAD.map(m => `<button class="padbtn" data-m="${m}"><b>${m}</b><i>${moveHint(parseAlg(m)[0]).arrow}</i></button>`).join('')}
+      ${cfg.pad ? `
+        ${challenges.length ? '<div class="challenge"><p class="challenge-q"></p><p class="challenge-fb"></p></div>' : ''}
+        <div class="pad">${padMoves.map(m => `<button class="padbtn" data-m="${m}"><b>${m}</b><i>${moveHint(parseAlg(m)[0]).arrow}</i></button>`).join('')}
         <button class="padbtn wide" data-m="reset">${icon('restart')} Nollställ</button></div>` : ''}
     </div>`;
 
@@ -164,16 +181,46 @@ function createPlayer(host, cfg) {
   const view = new CubeView(host.querySelector('.cube-box'), { mask: cfg.mask || 'full', pitch, yaw: cfg.yaw });
   views.push(view);
   view.applyTokens(setup);
+  view.setHighlight(cfg.highlight || []);
   view.applyCamera();
 
-  let i = 0, playing = false, slow = false;
-  const chipsEl = host.querySelector('.chips');
+  let i = 0, playing = false, slow = false, following = false;
+  const chipsEl = host.querySelector('.chips-wrap');
+  const followEl = host.querySelector('.follow');
   const playBtn = host.querySelector('[data-a=play]');
   const update = () => {
-    if (chipsEl) chipsEl.innerHTML = chipsHtml(tokens, i);
+    if (chipsEl) {
+      const cur = i < tokens.length ? tokens[i].part : -1;
+      chipsEl.innerHTML = named
+        ? parts.map((p, pi) => `<div class="chip-group ${pi === cur ? 'on' : ''}"><span class="chip-label">${esc(p.name)}</span>
+            <div class="chips">${tokens.map((t, k) => t.part === pi ? chip(t, k, i) : '').join('')}</div></div>`).join('')
+        : `<div class="chips">${tokens.map((t, k) => chip(t, k, i)).join('')}</div>`;
+    }
     if (playBtn) {
       playBtn.innerHTML = icon(playing ? 'pause' : 'play');
       playBtn.setAttribute('aria-label', playing ? 'Pausa' : 'Spela');
+    }
+    if (followEl && following) {
+      if (i < tokens.length) {
+        const t = tokens[i], h = moveHint(t);
+        followEl.innerHTML = `
+          <p class="follow-part">${named && parts[t.part].name ? `${esc(parts[t.part].name)} · ` : ''}drag ${i + 1} av ${tokens.length}</p>
+          <div class="follow-move"><b>${esc(t.text)}</b><span>${h.arrow}</span></div>
+          <p class="follow-text">${moveInstruction(t)}</p>
+          <div class="follow-nav">
+            <button class="icon-btn big" data-f="back" aria-label="Ett drag bakåt" ${i === 0 ? 'disabled' : ''}>${icon('back')}</button>
+            <button class="btn primary" data-f="next">Gjort! Nästa ${icon('next')}</button>
+          </div>`;
+      } else {
+        followEl.innerHTML = `
+          <p class="follow-text">Klart! Ser din kub ut som den här?</p>
+          <div class="follow-nav"><button class="btn ghost" data-f="reset">${icon('restart')} Börja om</button></div>`;
+      }
+      followEl.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
+        if (b.dataset.f === 'next') forward();
+        else if (b.dataset.f === 'back') back();
+        else reset();
+      });
     }
   };
   update();
@@ -203,7 +250,11 @@ function createPlayer(host, cfg) {
     if (i >= tokens.length) await reset();
     playing = true;
     update();
-    while (playing && i < tokens.length && !view.dead) await forward();
+    while (playing && i < tokens.length && !view.dead) {
+      // kort paus mellan delarna så att man hinner se var en del slutar
+      if (i > 0 && tokens[i - 1].part !== tokens[i].part) { await sleep(slow ? 900 : 550); if (!playing) break; }
+      await forward();
+    }
     playing = false;
     update();
   };
@@ -218,11 +269,38 @@ function createPlayer(host, cfg) {
       slow = !slow;
       view.speed = slow ? 900 : 380;
       b.classList.toggle('on', slow);
+    } else if (a === 'follow') {
+      following = !following;
+      playing = false;
+      b.classList.toggle('on', following);
+      followEl.classList.toggle('hidden', !following);
+      update();
     }
   });
+
+  // Minifrågor på knappsatsen: "Tryck på knappen som …"
+  let ci = 0;
+  const qEl = host.querySelector('.challenge-q'), fbEl = host.querySelector('.challenge-fb');
+  const showChallenge = () => {
+    if (!qEl) return;
+    if (ci < challenges.length) { qEl.textContent = `Uppgift ${ci + 1} av ${challenges.length}: ${challenges[ci].q}`; fbEl.textContent = ''; fbEl.className = 'challenge-fb'; }
+    else { qEl.textContent = 'Alla uppgifter klara!'; fbEl.textContent = 'Nu kan du bokstäverna. Prova fritt eller gå vidare.'; fbEl.className = 'challenge-fb ok'; }
+  };
+  showChallenge();
   host.querySelectorAll('.padbtn').forEach(b => b.onclick = () => {
     if (b.dataset.m === 'reset') { view.clearQueue().then(() => view.reset()); return; }
     view.animate(parseAlg(b.dataset.m)[0], 260);
+    if (qEl && ci < challenges.length) {
+      if (b.dataset.m === challenges[ci].a) {
+        fbEl.textContent = 'Rätt!';
+        fbEl.className = 'challenge-fb ok';
+        ci++;
+        setTimeout(showChallenge, 900);
+      } else {
+        fbEl.textContent = 'Inte riktigt. Titta på pilarna på knapparna och prova igen.';
+        fbEl.className = 'challenge-fb no';
+      }
+    }
   });
 
   return { view, play, reset };
@@ -404,18 +482,37 @@ function renderLesson(wid, n) {
   p.stepAt[w.id] = n; save();
   const last = n === w.steps.length - 1;
 
+  // Bilder ovanifrån: { caseRef | setupInv | setup, mask, arrows, label }
+  const diagrams = (step.diagrams || (step.diagram ? [step.diagram] : [])).map(d => {
+    if (!d.caseRef) return d;
+    const c = caseById(d.caseRef);
+    return { setupInv: c.alg, mask: c.mask, ...d };
+  });
+  const figs = diagrams.length ? `<div class="topviews">${diagrams.map(d => `
+    <figure class="tv">
+      <span class="tv-side">Bak</span>${topView(d)}<span class="tv-side">Mot dig</span>
+      ${d.label ? `<figcaption>${esc(d.label)}</figcaption>` : ''}
+    </figure>`).join('')}</div>` : '';
+
   app.innerHTML = `
     <div class="screen lesson">
       ${topbar({ middle: progressBar(n, w.steps.length), right: `<span class="world-chip">${glyph(w.id)}</span>` })}
-      <div class="lesson-body ${step.cube ? 'has-cube' : 'no-cube'}">
+      <div class="lesson-body ${step.cube || figs ? 'has-cube' : 'no-cube'}">
         ${step.cube
           ? '<div class="panel cube-panel"></div>'
-          : `<div class="panel art-panel ${step.practice ? 'practice' : ''}">${step.practice ? icon('hand', 'art') : glyph(w.id, 'art')}</div>`}
+          : figs
+            ? `<div class="panel art-panel diagrams">${figs}</div>`
+            : `<div class="panel art-panel ${step.practice ? 'practice' : ''}">${step.practice ? icon('hand', 'art') : glyph(w.id, 'art')}</div>`}
         <div class="panel text-panel">
-          <p class="eyebrow">Steg ${wi} · ${esc(w.title)}</p>
+          <p class="eyebrow">${step.recap ? 'Kommer du ihåg?' : `Steg ${wi} · ${esc(w.title)}`}</p>
           <h2>${step.title}</h2>
+          ${step.cube && figs ? figs : ''}
           <div class="lesson-text">${step.text}</div>
-          <button class="say" aria-label="Läs upp">${icon('sound')} Läs upp</button>
+          ${step.rule ? `<p class="rule">${icon('spark')}<span>${step.rule}</span></p>` : ''}
+          <div class="text-actions">
+            <button class="say" aria-label="Läs upp">${icon('sound')} Läs upp</button>
+            ${step.help ? `<button class="say help-btn">${icon('question')} Fastnade du?</button>` : ''}
+          </div>
           ${step.practice ? `<button class="btn primary huge done-btn">${icon('check')} Jag klarade det!</button>` : ''}
         </div>
       </div>
@@ -426,7 +523,22 @@ function renderLesson(wid, n) {
     </div>`;
 
   if (step.cube) createPlayer(app.querySelector('.cube-panel'), step.cube);
-  app.querySelector('.say').onclick = () => speak(step.title + '. ' + step.text);
+  app.querySelector('.say').onclick = () => speak(step.title + '. ' + step.text + (step.rule ? '. ' + step.rule : ''));
+  const helpBtn = app.querySelector('.help-btn');
+  if (helpBtn) helpBtn.onclick = () => {
+    const wrap = modal(`
+      <h2>Fastnade du?</h2>
+      <p class="muted">Välj det som stämmer, så hoppar du till rätt ställe.</p>
+      <div class="help-list">${step.help.map(([text, to], k) => to == null
+        ? `<p class="help-tip">${icon('spark')}<span>${esc(text)}</span></p>`
+        : `<button class="btn ghost help-item" data-k="${k}">${esc(text)} ${icon('next')}</button>`).join('')}</div>`,
+    [['Stäng', null, 'ghost']]);
+    wrap.querySelectorAll('.help-item').forEach(b => b.onclick = () => {
+      const to = step.help[+b.dataset.k][1];
+      wrap.remove();
+      location.hash = `#/lesson/${w.id}/${to}`;
+    });
+  };
   app.querySelector('.navbar .prev').onclick = () => { location.hash = `#/lesson/${w.id}/${n - 1}`; };
   const go = () => last ? completeWorld(w) : (location.hash = `#/lesson/${w.id}/${n + 1}`);
   const next = app.querySelector('.navbar .next');
