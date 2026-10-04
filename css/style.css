@@ -411,6 +411,35 @@ code.alg {
 .level span { width: 26px; height: 10px; border-radius: 5px; background: var(--panel-3); }
 .level span.on { background: var(--mint); }
 .hint { margin: 0; }
+.train-menu .lead, .algs .lead { text-align: center; margin: 6px 0 18px; }
+.train-list { display: grid; gap: 12px; max-width: 720px; margin: 0 auto; }
+.train-card { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.train-main { display: flex; align-items: center; gap: 14px; }
+.train-main > .ic { color: var(--ink-3); flex: none; }
+.train-ic {
+  width: 54px; height: 54px; flex: none; border-radius: 18px; display: grid; place-items: center;
+  background: var(--mint); color: var(--on-accent);
+  --gf: var(--on-accent); --gl: var(--on-accent); --ga: var(--on-accent); --gd: rgba(11, 34, 25, .22);
+}
+.train-ic .glyph, .train-ic .ic { width: 32px; height: 32px; color: var(--on-accent); }
+.train-txt { flex: 1; display: grid; gap: 2px; }
+.train-txt b { font-family: var(--display); font-size: 1.15rem; }
+.train-txt small { color: var(--ink-2); line-height: 1.25; }
+.train-meta { font-size: .82rem; color: var(--ink-3); }
+.train-card .mini-btn { align-self: flex-start; margin-left: 68px; }
+.alg-group { font-family: var(--display); margin: 22px 0 10px; }
+.alg-list { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.alg-card { padding: 14px; display: grid; grid-template-columns: 116px 1fr; gap: 14px; align-items: center; }
+.alg-fig { display: grid; place-items: center; }
+.alg-fig .topview { width: 116px; height: 116px; }
+.alg-fig .cube-box { width: 116px; height: 116px; }
+.alg-info { display: grid; gap: 6px; justify-items: start; min-width: 0; }
+.alg-info b { font-family: var(--display); font-size: 1.2rem; }
+.alg-info code.alg { margin: 0; font-size: .92rem; max-width: 100%; overflow-wrap: anywhere; }
+.alg-info .level { margin: 2px 0; justify-content: flex-start; }
+.alg-info .level span { width: 18px; height: 8px; }
+.modal-player .cube-box { height: min(40vh, 320px); }
+@media (max-width: 380px) { .alg-list { grid-template-columns: 1fr; } .alg-card { grid-template-columns: 96px 1fr; } .alg-fig .topview, .alg-fig .cube-box { width: 96px; height: 96px; } }
 .rate-label { margin: 18px 0 8px; font-weight: 600; }
 .rate-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .rate-btn { padding: 10px 8px; }

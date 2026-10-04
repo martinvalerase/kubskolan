@@ -286,7 +286,8 @@ function route() {
   if (name === 'map') return renderMap();
   if (name === 'lesson') return renderLesson(a, parseInt(b || '0', 10));
   if (name === 'quiz') return renderQuiz(a);
-  if (name === 'train') return renderTrainer();
+  if (name === 'train') return a ? renderTrainer(a) : renderTrainMenu();
+  if (name === 'algs') return renderAlgs(a);
   if (name === 'timer') return renderTimer();
   if (name === 'parent') return renderParent();
   location.hash = '#/';
@@ -591,9 +592,91 @@ function renderQuiz(wid) {
 
 // ---------- Träning ----------
 
-function renderTrainer() {
+// Stegen som har algoritmer att öva på, plus "alla".
+const TRAIN_WORLDS = WORLDS.filter(w => (w.cases || []).length);
+const trainCases = id => id === 'all' ? ALL_CASES : ALL_CASES.filter(c => c.world === id);
+const trainTitle = id => id === 'all' ? 'Alla algoritmer' : WORLDS[worldIndex(id)].title;
+const levelHtml = box => `<div class="level" aria-label="Nivå ${box} av 5">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= box ? 'on' : ''}"></span>`).join('')}</div>`;
+
+function renderTrainMenu() {
   const p = me();
-  const pool = ALL_CASES;
+  const card = (id, ic, title, sub) => {
+    const cases = trainCases(id);
+    const sits = cases.filter(c => (p.boxes[c.id] || 0) >= 3).length;
+    return `
+    <section class="panel train-card">
+      <a class="train-main" href="#/train/${id}">
+        <span class="train-ic">${ic}</span>
+        <span class="train-txt"><b>${esc(title)}</b><small>${esc(sub)}</small>
+          <span class="train-meta">${cases.length} ${cases.length === 1 ? 'algoritm' : 'algoritmer'} · ${sits} sitter</span></span>
+        ${icon('next')}
+      </a>
+      <a class="mini-btn" href="#/algs/${id}">${icon('cube')} Se algoritmerna</a>
+    </section>`;
+  };
+  app.innerHTML = `
+    <div class="screen train-menu">
+      ${topbar({ middle: `<span class="topbar-title">${icon('target')} Träna</span>` })}
+      <p class="lead">Vad vill du öva på?</p>
+      <div class="train-list">
+        ${TRAIN_WORLDS.map(w => card(w.id, glyph(w.id), `Steg ${worldIndex(w.id)} · ${w.title}`, w.short)).join('')}
+        ${card('all', icon('shuffle'), 'Alla algoritmer', 'Blandat från alla steg')}
+      </div>
+    </div>`;
+}
+
+function renderAlgs(id) {
+  const p = me();
+  if (!trainCases(id || '').length) { location.hash = '#/train'; return; }
+  const groups = id === 'all' ? TRAIN_WORLDS.map(w => [w, trainCases(w.id)]) : [[WORLDS[worldIndex(id)], trainCases(id)]];
+  app.innerHTML = `
+    <div class="screen algs">
+      ${topbar({ back: '#/train', middle: `<span class="topbar-title">${icon('cube')} ${esc(trainTitle(id))}</span>` })}
+      ${groups.map(([w, cases]) => `
+        ${id === 'all' ? `<h3 class="alg-group">Steg ${worldIndex(w.id)} · ${esc(w.title)}</h3>` : `<p class="lead">${esc(w.short)}</p>`}
+        <div class="alg-list">${cases.map(c => `
+          <article class="panel alg-card">
+            <div class="alg-fig" data-id="${c.id}"></div>
+            <div class="alg-info">
+              <b>${esc(c.name)}</b>
+              <code class="alg">${esc(c.alg)}</code>
+              ${levelHtml(p.boxes[c.id] || 0)}
+              <button class="btn small play-alg" data-id="${c.id}">${icon('play')} Visa på kuben</button>
+            </div>
+          </article>`).join('')}</div>`).join('')}
+      <div class="row"><a class="btn primary huge" href="#/train/${id}">${icon('target')} Öva på de här</a></div>
+    </div>`;
+
+  // Fall i toppen visas ovanifrån; F2L-fallen som en liten kub, eftersom de syns från sidan.
+  app.querySelectorAll('.alg-fig').forEach(el => {
+    const c = caseById(el.dataset.id);
+    if (c.mask === 'f2l') {
+      const box = document.createElement('div');
+      box.className = 'cube-box';
+      el.appendChild(box);
+      const v = new CubeView(box, { mask: c.mask });
+      views.push(v);
+      v.applyTokens(invertAlg(parseAlg(c.alg)));
+      v.applyCamera();
+    } else {
+      el.innerHTML = topView({ setupInv: c.alg, mask: c.mask, arrows: c.mask === 'full' });
+    }
+  });
+  app.querySelectorAll('.play-alg').forEach(b => b.onclick = () => {
+    const c = caseById(b.dataset.id);
+    let pl;
+    const wrap = modal(`<h2>${esc(c.name)}</h2><div class="modal-player"></div>`, [['Stäng', () => {
+      pl.view.destroy();
+      views = views.filter(v => v !== pl.view);
+    }, 'primary']]);
+    pl = createPlayer(wrap.querySelector('.modal-player'), { setupInv: c.alg, alg: c.alg, mask: c.mask });
+  });
+}
+
+function renderTrainer(id) {
+  const p = me();
+  const pool = trainCases(id);
+  if (!pool.length) { location.hash = '#/train'; return; }
 
   // Svåra fall (låg låda) kommer oftare
   const pick = () => {
@@ -613,13 +696,13 @@ function renderTrainer() {
     const box = p.boxes[c.id] || 0;
     app.innerHTML = `
       <div class="screen trainer">
-        ${topbar({ middle: `<span class="topbar-title">${icon('target')} Träna</span>`, right: `<span class="world-chip">${glyph(w.id)}</span>` })}
+        ${topbar({ back: '#/train', middle: `<span class="topbar-title">${icon('target')} ${esc(trainTitle(id))}</span>`, right: `<a class="mini-btn" href="#/algs/${id}">${icon('cube')} Algoritmer</a>` })}
         <div class="split">
           <div class="panel cube-panel trainer-cube"></div>
           <div class="panel text-panel trainer-side">
             <p class="eyebrow">${esc(w.title)}</p>
             <h2 class="case-name">Vad gör du här?</h2>
-            <div class="level" aria-label="Nivå ${box} av 5">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= box ? 'on' : ''}"></span>`).join('')}</div>
+            ${levelHtml(box)}
             <p class="hint muted">Gör det på din kub, eller tänk efter. Tryck sedan på knappen.</p>
             <button class="btn primary huge reveal">${icon('eye')} Visa lösningen</button>
             <div class="rate hidden">
