@@ -927,7 +927,20 @@ for (const p of db.profiles) {
 if (migrated) save();
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Ny version: ladda om en gång när den nya service workern tar över (inte vid allra första besöket).
+  let reloading = false;
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    // Hemskärmsappen laddas inte om när den öppnas igen – leta efter uppdateringar då.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+    });
+  }).catch(() => {});
 }
 if (window.speechSynthesis) speechSynthesis.getVoices();
 route();
