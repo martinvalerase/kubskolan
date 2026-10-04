@@ -1,8 +1,10 @@
 // Allt lektionsinnehåll. En "värld" = ett steg i metoden.
 // Steg: { title, text, rule?, recap?, practice?, help?: [[text, stegIndex|null]],
-//         cube?: { setup | setupInv | caseRef, alg | parts: [{name, alg}], mask, highlight: ['DFR'], pad, challenges },
+//         cube?: { setup | setupInv | caseRef, alg | parts: [{name, alg}], mask, highlight: ['DFR'], pad },
 //         diagram? | diagrams?: [{ caseRef | setupInv | setup, mask, arrows, label }] }
-// Fall (cases): algoritmer som tränas i Träningen och i quizet.
+// quiz: tre snabbfrågor i slutet av steget { q, options: [rätt, fel, fel], cube?, diagram? }.
+//       Första svaret är alltid det rätta; ordningen blandas när frågan visas.
+// Fall (cases): algoritmer som tränas i Träningen.
 // setupInv: kuben visas som om algoritmen skulle lösa den, så att bild och algoritm alltid stämmer.
 // highlight: bitar angivna med sin hemposition (t.ex. "DFR" = vit-grön-orange hörnet).
 
@@ -24,6 +26,11 @@ export const WORLDS = [
     id: 'w0',
     title: 'Lär känna kuben',
     short: 'Bitar, färger och kubens språk',
+    quiz: [
+      { q: 'Vilken färg är mittemot gul?', options: ['Vit', 'Grön', 'Röd'] },
+      { q: 'Hur många färger har ett hörn?', options: ['Tre', 'Två', 'En'] },
+      { q: 'Vad gör R?', options: ['Vrider högra sidan upp', 'Vrider högra sidan ner', 'Vrider toppen åt vänster'] },
+    ],
     steps: [
       {
         title: 'Hej kubare!',
@@ -54,23 +61,18 @@ export const WORLDS = [
       },
       {
         title: 'R betyder höger',
-        text: 'Varje vridning har en bokstav. Bokstäverna kommer från engelska.<br><br><b>R</b> som i <i>Right</i> = höger. <b>R</b> vrider högra sidan <b>UPP</b>.<br><b>R\'</b> (säg "R prim") vrider den <b>NER</b>.<br><br>Lös uppgifterna med knapparna.',
-        cube: { mask: 'full', pad: ['R', "R'"], challenges: [{ q: 'Vrid högra sidan UPP', a: 'R' }, { q: 'Vrid högra sidan NER', a: "R'" }, { q: 'Vrid högra sidan UPP igen', a: 'R' }] },
+        text: 'Varje vridning har en bokstav. Bokstäverna kommer från engelska.<br><br><b>R</b> som i <i>Right</i> = höger. <b>R</b> vrider högra sidan <b>UPP</b>.<br><b>R\'</b> (säg "R prim") vrider den <b>NER</b>.<br><br>Prova med knapparna.',
+        cube: { mask: 'full', pad: ['R', "R'"] },
       },
       {
         title: 'U betyder toppen',
         text: '<b>U</b> som i <i>Up</i> = upp, alltså toppen.<br><br><b>U</b> vrider toppen åt <b>VÄNSTER</b>.<br><b>U\'</b> vrider toppen åt <b>HÖGER</b>.',
-        cube: { mask: 'full', pad: ['U', "U'"], challenges: [{ q: 'Vrid toppen åt VÄNSTER', a: 'U' }, { q: 'Vrid toppen åt HÖGER', a: "U'" }] },
+        cube: { mask: 'full', pad: ['U', "U'"] },
       },
       {
         title: 'F betyder framsidan',
         text: '<b>F</b> som i <i>Front</i> = framsidan, den som är mot dig.<br><br><b>F</b> vrider framsidan <b>medurs</b>, åt samma håll som klockans visare.<br><b>F\'</b> vrider den baklänges.<br><br>En <b>2</b> efter bokstaven betyder: gör det två gånger. <b>F2</b> = F F.',
-        cube: { mask: 'full', pad: ['F', "F'"], challenges: [{ q: 'Vrid framsidan som klockan', a: 'F' }, { q: 'Vrid framsidan baklänges', a: "F'" }] },
-      },
-      {
-        title: 'Blandat prov',
-        text: 'Nu blandar vi! Titta på pilarna på knapparna om du är osäker.',
-        cube: { mask: 'full', pad: true, challenges: [{ q: 'Vrid toppen åt HÖGER', a: "U'" }, { q: 'Vrid högra sidan NER', a: "R'" }, { q: 'Vrid framsidan som klockan', a: 'F' }, { q: 'Vrid högra sidan UPP', a: 'R' }, { q: 'Vrid toppen åt VÄNSTER', a: 'U' }] },
+        cube: { mask: 'full', pad: ['F', "F'"] },
       },
       {
         title: 'Dansen',
@@ -84,6 +86,11 @@ export const WORLDS = [
     id: 'w1',
     title: 'Prästkragen',
     short: 'Fyra vita kanter runt den gula mitten',
+    quiz: [
+      { q: 'Vilken mitt sitter i mitten av prästkragen?', options: ['Den gula', 'Den vita', 'Den gröna'] },
+      { q: 'Åt vilket håll ska det vita på kronbladen peka?', options: ['Uppåt', 'Mot dig', 'Nedåt'] },
+      { q: 'Vad gör du innan du vrider upp en vit kant?', options: ['Vrider toppen så att platsen är tom', 'Gör Dansen', 'Vänder på kuben'] },
+    ],
     steps: [
       {
         recap: true,
@@ -143,6 +150,11 @@ export const WORLDS = [
     id: 'w2',
     title: 'Vita korset',
     short: 'Steg C i CFOP: Cross',
+    quiz: [
+      { q: 'Vilken färg på kronbladet tittar du på när du matchar?', options: ['Den andra färgen, inte den vita', 'Den vita färgen', 'Hörnets färg'] },
+      { q: 'Färgen matchar mitten. Hur många gånger vrider du sidan?', options: ['Två', 'En', 'Tre'] },
+      { q: 'Var hamnar det vita korset?', options: ['Under kuben', 'På toppen', 'Mot dig'] },
+    ],
     steps: [
       {
         recap: true,
@@ -192,6 +204,11 @@ export const WORLDS = [
     id: 'w3',
     title: 'Vita hörnen',
     short: 'Den första våningen blir klar',
+    quiz: [
+      { q: 'Vad visar var ett vitt hörn ska bo?', options: ['Hörnets två andra färger', 'Den vita färgen', 'Den gula mitten'] },
+      { q: 'Var håller du hörnet innan du dansar?', options: ['Uppe till höger, framme', 'Uppe till vänster, bak', 'Nere till vänster'] },
+      { q: 'Hur många danser kan ett hörn behöva?', options: ['1, 3 eller 5', 'Alltid 6', 'Alltid 2'] },
+    ],
     steps: [
       {
         recap: true,
@@ -243,7 +260,11 @@ export const WORLDS = [
     id: 'w4',
     title: 'Mittenvåningen',
     short: 'Två våningar klara (F2L, nybörjarstil)',
-    caseIntro: 'Vilket håll ska kanten?',
+    quiz: [
+      { q: 'Vart ska den blinkande kanten?', options: ['Till höger', 'Till vänster'], cube: { caseRef: 'mid_right', highlight: ['FR'] } },
+      { q: 'Vilka kanter i toppen ska ner i mitten?', options: ['Kanter utan gult', 'Kanter med gult', 'Alla kanter'] },
+      { q: 'Vad gör du först?', options: ['Vrider toppen bort från där kanten ska', 'Vrider toppen mot där kanten ska', 'Gör Dansen sex gånger'] },
+    ],
     steps: [
       {
         recap: true,
@@ -259,7 +280,7 @@ export const WORLDS = [
       {
         title: 'Ny bokstav: L',
         text: '<b>L</b> som i <i>Left</i> = vänster.<br><br><b>L</b> vrider vänstra sidan <b>NER</b>. <b>L\'</b> vrider den <b>UPP</b>. Det är tvärtom mot R!',
-        cube: { mask: 'full', pad: ['L', "L'", 'R', "R'"], challenges: [{ q: 'Vrid vänstra sidan NER', a: 'L' }, { q: 'Vrid vänstra sidan UPP', a: "L'" }, { q: 'Vrid högra sidan UPP', a: 'R' }] },
+        cube: { mask: 'full', pad: ['L', "L'", 'R', "R'"] },
       },
       {
         title: 'Gör ett upp-och-ner-T',
@@ -305,7 +326,11 @@ export const WORLDS = [
     id: 'w5', auf: true,
     title: 'Gula korset',
     short: 'Steg O del 1: kanterna gula',
-    caseIntro: 'Vilket gult mönster är det?',
+    quiz: [
+      { q: 'Vilket mönster är det?', options: ['Linje', 'L', 'Prick'], diagram: { caseRef: 'oll_line' } },
+      { q: 'Vilket mönster är det?', options: ['L', 'Linje', 'Prick'], diagram: { caseRef: 'oll_l' } },
+      { q: 'Du har en prick. Vad gör du först?', options: ['Linje-algoritmen', 'L-algoritmen', 'Sune'] },
+    ],
     steps: [
       {
         recap: true,
@@ -358,7 +383,11 @@ export const WORLDS = [
     id: 'w6', auf: true,
     title: 'Gula toppen',
     short: 'Steg O del 2: hela toppen gul',
-    caseIntro: 'Vilket fall är det?',
+    quiz: [
+      { q: 'Var håller du fiskens huvud, det gula hörnet?', options: ['Nere till vänster', 'Uppe till höger', 'Nere till höger'] },
+      { q: 'Vilken algoritm gör du här?', options: ['Sune', 'Anti-Sune', 'T-perm'], diagram: { caseRef: 'sune' } },
+      { q: 'Inget hörn har gult uppåt. Vad gör du?', options: ['Sune, så att du får en fisk', 'T-perm', 'Börjar om från början'] },
+    ],
     steps: [
       {
         recap: true,
@@ -422,6 +451,11 @@ export const WORLDS = [
     id: 'w7', auf: true,
     title: 'Hörnen på plats',
     short: 'Steg P del 1: T-perm',
+    quiz: [
+      { q: 'Vad är strålkastare?', options: ['Två hörn på samma sida med samma färg', 'Två gula kanter', 'En gul prick'] },
+      { q: 'Var håller du strålkastarna när du gör T-perm?', options: ['Till vänster', 'Till höger', 'Mot dig'] },
+      { q: 'Hur börjar T-perm?', options: ['Med Dansen', 'Med Sune', 'Med F'] },
+    ],
     steps: [
       {
         recap: true,
@@ -473,7 +507,11 @@ export const WORLDS = [
     id: 'w8', auf: true,
     title: 'Kanterna på plats',
     short: 'Steg P del 2: kuben löst!',
-    caseIntro: 'Vilken algoritm behövs?',
+    quiz: [
+      { q: 'Var håller du den klara sidan?', options: ['Bakåt', 'Mot dig', 'Till vänster'] },
+      { q: 'Ingen sida är klar. Vad gör du?', options: ['Ua från vilken sida som helst', 'T-perm', 'Sune'] },
+      { q: 'Du gjorde Ua men det skulle vara Ub. Vad gör du nu?', options: ['Ua en gång till', 'Börjar om från början', 'Vrider toppen'] },
+    ],
     steps: [
       {
         recap: true,
@@ -529,7 +567,11 @@ export const WORLDS = [
     id: 'w9',
     title: 'Bonus: Riktig F2L',
     short: 'Hörn och kant samtidigt – som proffsen',
-    caseIntro: 'Vilken insättning passar?',
+    quiz: [
+      { q: 'Vad är ett par?', options: ['Ett vitt hörn och dess kant', 'Två hörn', 'Två mittbitar'] },
+      { q: 'Vilken algoritm passar här?', options: ["R U R'", "F' U' F", "U R U' R'"], cube: { caseRef: 'f2l_1', highlight: ['DFR', 'FR'] } },
+      { q: 'Vitt framåt, kanten till vänster. Vilken algoritm?', options: ["F' U' F", "R U R'", "U' F' U F"] },
+    ],
     steps: [
       {
         title: 'Snabbare: par!',

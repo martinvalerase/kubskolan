@@ -351,11 +351,6 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02
 .follow-nav .btn { min-width: 200px; }
 
 /* Minifrågor på knappsatsen */
-.challenge { background: var(--panel-2); border-radius: 16px; padding: 12px 14px; text-align: center; }
-.challenge-q { margin: 0; font-family: var(--display); font-weight: 700; font-size: 1.1rem; }
-.challenge-fb { margin: 4px 0 0; min-height: 1.4em; color: var(--ink-2); }
-.challenge-fb.ok { color: var(--mint); font-weight: 600; }
-.challenge-fb.no { color: var(--coral); }
 
 /* Bilder ovanifrån */
 .topviews { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin: 4px 0 14px; }
@@ -424,8 +419,6 @@ code.alg {
 
 /* ---------- Tidtagning ---------- */
 .timer-screen { max-width: 760px; }
-.scramble-box { padding: 16px; text-align: center; }
-.scramble-cube { margin-top: 12px; }
 .timer-pad {
   margin: 16px 0; border-radius: 30px; background: var(--panel); border: 1px solid var(--line);
   padding: 40px 16px; text-align: center; touch-action: none; outline: none; transition: background .15s, border-color .15s;

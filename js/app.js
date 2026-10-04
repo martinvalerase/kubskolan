@@ -1,4 +1,4 @@
-import { CubeView, parseAlg, invertAlg, moveHint, moveInstruction, randomScramble } from './cube.js';
+import { CubeView, parseAlg, invertAlg, moveHint, moveInstruction } from './cube.js';
 import { topView } from './diagram.js';
 import { WORLDS, ALL_CASES, caseById } from './content.js';
 import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES } from './icons.js';
@@ -28,7 +28,6 @@ function newProfile(name, av) {
 
 const worldIndex = id => WORLDS.findIndex(w => w.id === id);
 const coreCases = w => (w.cases || []).filter(c => !c.bonus);
-const hasQuiz = w => coreCases(w).length >= 2;
 
 function isUnlocked(p, i) {
   return i === 0 || db.unlockAll || !!p.lessons[WORLDS[i - 1].id];
@@ -37,7 +36,7 @@ function isUnlocked(p, i) {
 function stars(p, w) {
   if (!p.lessons[w.id]) return 0;
   let s = 1;
-  if (!hasQuiz(w) || (p.quiz[w.id] || 0) >= 0.8) s++;
+  if ((p.quiz[w.id] || 0) >= 0.8) s++;
   if (coreCases(w).every(c => (p.boxes[c.id] || 0) >= 3)) s++;
   return s;
 }
@@ -111,14 +110,6 @@ function modal(html, buttons) {
   return wrap;
 }
 
-function chipsHtml(tokens, done = -1) {
-  return tokens.map((t, i) => {
-    const h = moveHint(t);
-    const cls = i < done ? 'done' : i === done ? 'cur' : '';
-    return `<span class="chip ${cls}" title="${esc(h.name)}"><b>${esc(t.text)}</b><i>${h.arrow}</i></span>`;
-  }).join('');
-}
-
 function topbar({ back = '#/map', middle = '', right = '' } = {}) {
   return `<header class="topbar">
     <a class="icon-btn" href="${back}" aria-label="Stäng">${icon('close')}</a>
@@ -141,7 +132,7 @@ function chip(t, k, done) {
   return `<span class="chip ${k < done ? 'done' : k === done ? 'cur' : ''}" title="${esc(h.name)}"><b>${esc(t.text)}</b><i>${h.arrow}</i></span>`;
 }
 
-// cfg: { setup, setupInv, setupTokens, alg, parts: [{name, alg}], mask, pad, challenges: [{q, a}],
+// cfg: { setup, setupInv, setupTokens, alg, parts: [{name, alg}], mask, pad,
 //        highlight: ['DFR', …], pitch, yaw, caseRef }
 function createPlayer(host, cfg) {
   if (cfg.caseRef) {
@@ -154,7 +145,6 @@ function createPlayer(host, cfg) {
   const named = parts.some(p => p.name);
   const setup = cfg.setupTokens || (cfg.setupInv ? invertAlg(parseAlg(cfg.setupInv)) : parseAlg(cfg.setup || ''));
   const padMoves = Array.isArray(cfg.pad) ? cfg.pad : PAD;
-  const challenges = cfg.challenges || [];
 
   host.innerHTML = `
     <div class="player">
@@ -171,7 +161,6 @@ function createPlayer(host, cfg) {
           <button class="ctl follow-btn" data-a="follow" aria-label="Följ med på din kub">${icon('hand')}<span>Följ med</span></button>
         </div>` : ''}
       ${cfg.pad ? `
-        ${challenges.length ? '<div class="challenge"><p class="challenge-q"></p><p class="challenge-fb"></p></div>' : ''}
         <div class="pad">${padMoves.map(m => `<button class="padbtn" data-m="${m}"><b>${m}</b><i>${moveHint(parseAlg(m)[0]).arrow}</i></button>`).join('')}
         <button class="padbtn wide" data-m="reset">${icon('restart')} Nollställ</button></div>` : ''}
     </div>`;
@@ -278,29 +267,9 @@ function createPlayer(host, cfg) {
     }
   });
 
-  // Minifrågor på knappsatsen: "Tryck på knappen som …"
-  let ci = 0;
-  const qEl = host.querySelector('.challenge-q'), fbEl = host.querySelector('.challenge-fb');
-  const showChallenge = () => {
-    if (!qEl) return;
-    if (ci < challenges.length) { qEl.textContent = `Uppgift ${ci + 1} av ${challenges.length}: ${challenges[ci].q}`; fbEl.textContent = ''; fbEl.className = 'challenge-fb'; }
-    else { qEl.textContent = 'Alla uppgifter klara!'; fbEl.textContent = 'Nu kan du bokstäverna. Prova fritt eller gå vidare.'; fbEl.className = 'challenge-fb ok'; }
-  };
-  showChallenge();
   host.querySelectorAll('.padbtn').forEach(b => b.onclick = () => {
     if (b.dataset.m === 'reset') { view.clearQueue().then(() => view.reset()); return; }
     view.animate(parseAlg(b.dataset.m)[0], 260);
-    if (qEl && ci < challenges.length) {
-      if (b.dataset.m === challenges[ci].a) {
-        fbEl.textContent = 'Rätt!';
-        fbEl.className = 'challenge-fb ok';
-        ci++;
-        setTimeout(showChallenge, 900);
-      } else {
-        fbEl.textContent = 'Inte riktigt. Titta på pilarna på knapparna och prova igen.';
-        fbEl.className = 'challenge-fb no';
-      }
-    }
   });
 
   return { view, play, reset };
@@ -433,7 +402,7 @@ function renderMap() {
                 <span class="stop-num">Steg ${i}</span>
                 <b>${esc(w.title)}</b>
                 ${done ? starsHtml(stars(p, w)) : `<small>${esc(w.short)}</small>`}
-                ${open && done && hasQuiz(w) ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} Quiz</a>` : ''}
+                ${open && done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} Frågor</a>` : ''}
               </div>
             </li>`;
           }).join('')}
@@ -472,6 +441,13 @@ function renderMap() {
 
 // ---------- Lektion ----------
 
+// Bild ovanifrån som pekar på ett fall får fallets algoritm och mask.
+function caseFig(d) {
+  if (!d.caseRef) return d;
+  const c = caseById(d.caseRef);
+  return { setupInv: c.alg, mask: c.mask, ...d };
+}
+
 function renderLesson(wid, n) {
   const p = me();
   const wi = worldIndex(wid);
@@ -483,11 +459,7 @@ function renderLesson(wid, n) {
   const last = n === w.steps.length - 1;
 
   // Bilder ovanifrån: { caseRef | setupInv | setup, mask, arrows, label }
-  const diagrams = (step.diagrams || (step.diagram ? [step.diagram] : [])).map(d => {
-    if (!d.caseRef) return d;
-    const c = caseById(d.caseRef);
-    return { setupInv: c.alg, mask: c.mask, ...d };
-  });
+  const diagrams = (step.diagrams || (step.diagram ? [step.diagram] : [])).map(caseFig);
   const figs = diagrams.length ? `<div class="topviews">${diagrams.map(d => `
     <figure class="tv">
       <span class="tv-side">Bak</span>${topView(d)}<span class="tv-side">Mot dig</span>
@@ -540,89 +512,78 @@ function renderLesson(wid, n) {
     });
   };
   app.querySelector('.navbar .prev').onclick = () => { location.hash = `#/lesson/${w.id}/${n - 1}`; };
-  const go = () => last ? completeWorld(w) : (location.hash = `#/lesson/${w.id}/${n + 1}`);
+  const go = () => { location.hash = last ? `#/quiz/${w.id}` : `#/lesson/${w.id}/${n + 1}`; };
   const next = app.querySelector('.navbar .next');
   if (next) next.onclick = go;
   const done = app.querySelector('.text-panel .done-btn');
   if (done) done.onclick = go;
 }
 
-function completeWorld(w) {
-  const p = me();
-  const first = !p.lessons[w.id];
-  p.lessons[w.id] = true;
-  p.stepAt[w.id] = 0;
-  save();
-  confetti();
-  const buttons = [['Till kartan', () => { location.hash = '#/map'; }, hasQuiz(w) ? 'ghost' : 'primary']];
-  if (hasQuiz(w)) buttons.push([`${icon('question')} Gör quizet`, () => { location.hash = `#/quiz/${w.id}`; }, 'primary']);
-  modal(`
-    <div class="medal">${glyph(w.id)}</div>
-    <h2>${first ? 'Steget klart!' : 'Bra jobbat!'}</h2>
-    <p>Du klarade <b>${esc(w.title)}</b>.</p>
-    ${coreCases(w).length ? '<p class="muted">Öva algoritmerna under Träna för att få alla stjärnor.</p>' : ''}`,
-  buttons);
-}
+// ---------- Snabbfrågor ----------
 
-// ---------- Quiz ----------
-
+// Tre frågor i slutet av varje steg. Första svaret i content.js är det rätta.
 function renderQuiz(wid) {
   const p = me();
-  const w = WORLDS[worldIndex(wid)];
-  if (!w || !hasQuiz(w)) { location.hash = '#/map'; return; }
-  const cases = coreCases(w);
-  const total = 5;
+  const wi = worldIndex(wid);
+  const w = WORLDS[wi];
+  if (!w || !w.quiz || !isUnlocked(p, wi)) { location.hash = '#/map'; return; }
+  const total = w.quiz.length;
   let q = 0, right = 0;
 
   const ask = () => {
     clearViews();
     if (q >= total) return finish();
-    const c = cases[Math.floor(Math.random() * cases.length)];
-    const setup = invertAlg(parseAlg(c.alg));
-    if (w.auf) setup.push(...parseAlg(['', 'U', 'U2', "U'"][Math.floor(Math.random() * 4)]));
+    const item = w.quiz[q];
+    const fig = item.diagram && caseFig(item.diagram);
     app.innerHTML = `
       <div class="screen quiz">
         ${topbar({ middle: progressBar(q, total), right: `<span class="world-chip">${icon('question')}</span>` })}
         <div class="quiz-body">
-          <p class="eyebrow">Quiz · ${esc(w.title)}</p>
-          <h2>${esc(w.caseIntro || 'Vilket fall är det?')}</h2>
-          <div class="panel cube-panel quiz-cube"></div>
-          <div class="answers">${shuffle(cases).map(o => `<button class="btn answer" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
+          <p class="eyebrow">Snabbfrågor · ${esc(w.title)}</p>
+          <h2>${esc(item.q)}</h2>
+          ${item.cube ? '<div class="panel cube-panel quiz-cube"></div>' : ''}
+          ${fig ? `<div class="topviews"><figure class="tv"><span class="tv-side">Bak</span>${topView(fig)}<span class="tv-side">Mot dig</span></figure></div>` : ''}
+          <div class="answers">${shuffle(item.options.map((o, k) => [o, k])).map(([o, k]) => `<button class="btn answer" data-k="${k}">${esc(o)}</button>`).join('')}</div>
           <div class="feedback"></div>
         </div>
       </div>`;
-    createPlayer(app.querySelector('.quiz-cube'), { setupTokens: setup, mask: c.mask });
+    if (item.cube) createPlayer(app.querySelector('.quiz-cube'), { ...item.cube, alg: '' }); // visa inte lösningen
     app.querySelectorAll('.answer').forEach(b => b.onclick = () => {
-      const ok = b.dataset.id === c.id;
+      const ok = b.dataset.k === '0';
       if (ok) right++;
       app.querySelectorAll('.answer').forEach(x => {
         x.disabled = true;
-        if (x.dataset.id === c.id) x.classList.add('right');
+        if (x.dataset.k === '0') x.classList.add('right');
         else if (x === b) x.classList.add('wrong');
       });
       const fb = app.querySelector('.feedback');
-      fb.innerHTML = `<p class="fb-title ${ok ? 'ok' : ''}">${ok ? `${icon('check')} Rätt!` : `Nästan! Det var <b>${esc(c.name)}</b>.`}</p>
-        <code class="alg">${esc(c.alg)}</code>
-        <button class="btn primary nextq">Nästa ${icon('next')}</button>`;
+      fb.innerHTML = `<p class="fb-title ${ok ? 'ok' : ''}">${ok ? `${icon('check')} Rätt!` : `Nästan! Rätt svar: <b>${esc(item.options[0])}</b>`}</p>
+        <button class="btn primary nextq">${q + 1 < total ? 'Nästa' : 'Klar'} ${icon(q + 1 < total ? 'next' : 'check')}</button>`;
       fb.querySelector('.nextq').onclick = () => { q++; ask(); };
     });
   };
 
   const finish = () => {
+    const first = !p.lessons[w.id];
+    p.lessons[w.id] = true;
+    p.stepAt[w.id] = 0;
     const score = right / total;
-    if (score > (p.quiz[w.id] || 0)) { p.quiz[w.id] = score; save(); }
-    if (score >= 0.8) confetti();
+    if (score > (p.quiz[w.id] || 0)) p.quiz[w.id] = score;
+    save();
+    if (first || score >= 0.8) confetti();
     app.innerHTML = `
       <div class="screen center-screen">
         <div class="medal big">${score >= 0.8 ? icon('star') : glyph(w.id)}</div>
-        <h2>${right} av ${total} rätt</h2>
-        <p class="muted">${score >= 0.8 ? 'Superbra! Du fick en stjärna till.' : 'Bra försök! Klarar du 4 av 5 får du en stjärna.'}</p>
+        <h2>${first ? 'Steget klart!' : `${right} av ${total} rätt`}</h2>
+        <p class="muted">${first ? `${right} av ${total} rätt. ` : ''}${score >= 0.8 ? 'Superbra! Du fick en stjärna.' : `Svara rätt på alla ${total} för att få en stjärna.`}</p>
+        ${coreCases(w).length ? '<p class="muted">Öva algoritmerna under Träna för att få alla stjärnor.</p>' : ''}
         <div class="row">
-          <a class="btn ghost" href="#/map">Till kartan</a>
-          <button class="btn primary again">${icon('restart')} Igen</button>
+          ${score < 0.8 ? `<button class="btn ghost again">${icon('restart')} Igen</button>` : ''}
+          <a class="btn primary" href="#/map">Till kartan</a>
         </div>
       </div>`;
-    app.querySelector('.again').onclick = () => { q = 0; right = 0; ask(); };
+    const again = app.querySelector('.again');
+    if (again) again.onclick = () => { q = 0; right = 0; ask(); };
   };
 
   ask();
@@ -632,17 +593,7 @@ function renderQuiz(wid) {
 
 function renderTrainer() {
   const p = me();
-  const pool = ALL_CASES.filter(c => db.unlockAll || p.lessons[c.world]);
-  if (!pool.length) {
-    app.innerHTML = `
-      <div class="screen center-screen">
-        <div class="medal big">${icon('lock')}</div>
-        <h2>Träningen är låst</h2>
-        <p class="muted">Klara steget <b>Mittenvåningen</b> först – då finns det algoritmer att träna på.</p>
-        <a class="btn primary" href="#/map">Till kartan</a>
-      </div>`;
-    return;
-  }
+  const pool = ALL_CASES;
 
   // Svåra fall (låg låda) kommer oftare
   const pick = () => {
@@ -716,21 +667,11 @@ function fmt(ms) {
 
 function renderTimer() {
   const p = me();
-  let scramble = randomScramble(20);
-  let state = 'idle', t0 = 0, raf = 0, holdTimer = 0, showCube = false;
+  let state = 'idle', t0 = 0, raf = 0, holdTimer = 0;
 
   app.innerHTML = `
     <div class="screen timer-screen">
       ${topbar({ middle: `<span class="topbar-title">${icon('timer')} Tidtagning</span>`, right: pAvatar(p, 'sm') })}
-      <div class="panel scramble-box">
-        <p class="eyebrow">Blanda din kub – gul upp, grön fram</p>
-        <div class="chips scramble"></div>
-        <div class="row">
-          <button class="btn ghost small newscr">${icon('shuffle')} Ny blandning</button>
-          <button class="btn ghost small showcube">${icon('eye')} Visa på kuben</button>
-        </div>
-        <div class="scramble-cube hidden"></div>
-      </div>
       <div class="timer-pad" tabindex="0">
         <div class="time">0.00</div>
         <p class="timer-help">Håll fingret här tills det blir grönt. Släpp för att starta. Tryck för att stoppa.</p>
@@ -740,15 +681,6 @@ function renderTimer() {
 
   const timeEl = app.querySelector('.time');
   const pad = app.querySelector('.timer-pad');
-  const cubeHost = app.querySelector('.scramble-cube');
-
-  const drawScramble = () => {
-    app.querySelector('.scramble').innerHTML = chipsHtml(scramble);
-    if (showCube) {
-      clearViews();
-      createPlayer(cubeHost, { setupTokens: scramble, mask: 'full' });
-    }
-  };
   const drawTimes = () => {
     const times = p.times.slice(-10).reverse();
     const best = p.times.length ? Math.min(...p.times.map(t => t.ms)) : null;
@@ -781,8 +713,6 @@ function renderTimer() {
       if (ms < prevBest && p.times.length > 1) confetti();
       state = 'stopped';
       pad.className = 'timer-pad';
-      scramble = randomScramble(20);
-      drawScramble();
       drawTimes();
       return;
     }
@@ -822,14 +752,6 @@ function renderTimer() {
     document.removeEventListener('keyup', key);
   });
 
-  app.querySelector('.newscr').onclick = () => { scramble = randomScramble(20); drawScramble(); };
-  app.querySelector('.showcube').onclick = e => {
-    showCube = !showCube;
-    cubeHost.classList.toggle('hidden', !showCube);
-    e.currentTarget.innerHTML = showCube ? `${icon('eyeOff')} Dölj kuben` : `${icon('eye')} Visa på kuben`;
-    if (showCube) drawScramble(); else clearViews();
-  };
-  drawScramble();
   drawTimes();
 }
 
@@ -875,7 +797,7 @@ function renderParent() {
           </div>
           <table>
             ${WORLDS.map((w, i) => `<tr><td><span class="tglyph">${glyph(w.id)}</span>${i}. ${esc(w.title)}</td><td>${starsHtml(stars(p, w))}</td>
-              <td>${hasQuiz(w) && p.quiz[w.id] != null ? `Quiz ${Math.round(p.quiz[w.id] * 100)} %` : ''}</td></tr>`).join('')}
+              <td>${p.quiz[w.id] != null ? `Frågor ${Math.round(p.quiz[w.id] * 100)} %` : ''}</td></tr>`).join('')}
           </table>
           <div class="row start">
             <button class="btn ghost small reset" data-id="${p.id}">${icon('restart')} Nollställ framsteg</button>
