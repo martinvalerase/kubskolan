@@ -368,6 +368,26 @@ function newProfileDialog() {
 
 // ---------- Karta ----------
 
+// Låset på kartan: rätt kod låser upp alla steg (samma som föräldrasidans reglage)
+const UNLOCK_CODE = '00000';
+
+function askUnlockCode(msg) {
+  const wrap = modal(`<h2>Lås upp alla steg</h2>
+    <p class="muted">${msg || 'Skriv koden.'}</p>
+    <input class="field gate" inputmode="numeric" autocomplete="off">`, [
+    ['Avbryt', null, 'ghost'],
+    ['Lås upp', () => check(), 'primary'],
+  ]);
+  const input = wrap.querySelector('.gate');
+  const check = () => {
+    wrap.remove();
+    if (input.value.trim() === UNLOCK_CODE) { db.unlockAll = true; save(); renderMap(); }
+    else askUnlockCode('Fel kod. Försök igen.');
+  };
+  input.onkeydown = e => { if (e.key === 'Enter') check(); };
+  input.focus();
+}
+
 function renderMap() {
   const p = me();
   const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
@@ -381,6 +401,7 @@ function renderMap() {
           <h1>Hej ${esc(p.name)}!</h1>
           <p class="sub">${doneCount === WORLDS.length ? 'Du har klarat alla steg.' : `${doneCount} av ${WORLDS.length} steg klara`}</p>
         </div>
+        ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="Lås upp alla steg">${icon('lock')}</button>`}
       </header>
       <div class="tiles">
         <a class="tile" href="#/train"><span class="tile-ic">${icon('target')}</span><b>Träna</b><small>Algoritmer</small></a>
@@ -410,6 +431,9 @@ function renderMap() {
         </ol>
       </div>
     </div>`;
+
+  const unlockBtn = app.querySelector('.unlock-btn');
+  if (unlockBtn) unlockBtn.onclick = () => askUnlockCode('');
 
   app.querySelectorAll('.node').forEach(b => b.onclick = () => {
     const w = WORLDS[+b.dataset.i];
