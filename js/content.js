@@ -15,6 +15,8 @@ const MID_R = "U R U' R' U' F' U F";
 const SUNE = "R U R' U R U2 R'";
 const SUNE_PARTS = [{ name: 'Första halvan', alg: "R U R'" }, { name: 'Andra halvan', alg: "U R U2 R'" }];
 const TPERM_PARTS = [{ name: 'Dansen', alg: "R U R' U'" }, { name: 'Mitten', alg: "R' F R2 U' R'" }, { name: 'Slutet', alg: "U' R U R' F'" }];
+const YPERM = "F R U' R' U' R U R' F' R U R' U' R' F R F'";
+const YPERM_PARTS = [{ name: 'Start', alg: "F R U' R' U' R U R' F'" }, { name: 'Dansen', alg: "R U R' U'" }, { name: 'Slutet', alg: "R' F R F'" }];
 const UA = "R U' R U R U R U' R' U' R2";
 const UA_PARTS = [{ name: 'Start', alg: "R U'" }, { name: 'Snurra', alg: "R U R U R U'" }, { name: 'Slut', alg: "R' U' R2" }];
 const UB_PARTS = [{ name: 'Start', alg: 'R2 U' }, { name: 'Snurra', alg: "R U R' U' R' U'" }, { name: 'Slut', alg: "R' U R'" }];
@@ -450,11 +452,12 @@ export const WORLDS = [
   {
     id: 'w7', auf: true,
     title: 'Hörnen på plats',
-    short: 'Steg P del 1: T-perm',
+    short: 'Steg P del 1: T-perm och Y-perm',
     quiz: [
       { q: 'Vad är strålkastare?', options: ['Två hörn på samma sida med samma färg', 'Två gula kanter', 'En gul prick'] },
       { q: 'Var håller du strålkastarna när du gör T-perm?', options: ['Till vänster', 'Till höger', 'Mot dig'] },
       { q: 'Hur börjar T-perm?', options: ['Med Dansen', 'Med Sune', 'Med F'] },
+      { q: 'Inga strålkastare. Vad gör du?', options: ['Y-perm', 'T-perm från vänster', 'Ua'] },
     ],
     steps: [
       {
@@ -478,9 +481,10 @@ export const WORLDS = [
       },
       {
         title: 'Inga strålkastare?',
-        text: 'Hittar du inga strålkastare alls? Gör T-perm från vilken sida som helst. Nu får du strålkastare! Gör sedan som vanligt.',
-        // setupInv: kuben visas som om denna algoritm (Y-perm) skulle lösa den
-        cube: { setupInv: "F R U' R' U' R U R' F' R U R' U' R' F R F'", parts: TPERM_PARTS, mask: 'full' },
+        text: 'Hittar du inga strålkastare alls? Då ska två hörn byta plats <b>på snedden</b>. Gör <b>Y-perm</b> från vilken sida som helst. Den har också tre delar, och i mitten kommer Dansen!',
+        rule: 'Kommer du inte ihåg Y-perm? Gör T-perm, så får du strålkastare.',
+        diagram: { caseRef: 'yperm', arrows: true },
+        cube: { caseRef: 'yperm', parts: YPERM_PARTS },
       },
       {
         title: 'Vrid toppen på plats',
@@ -501,6 +505,7 @@ export const WORLDS = [
     ],
     cases: [
       { id: 'tperm', name: 'T-perm', alg: "R U R' U' R' F R2 U' R' U' R U R' F'", mask: 'full' },
+      { id: 'yperm', name: 'Y-perm', alg: YPERM, mask: 'full' },
     ],
   },
   {
