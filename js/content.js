@@ -618,5 +618,55 @@ export const WORLDS = [
   },
 ];
 
-export const ALL_CASES = WORLDS.flatMap(w => (w.cases || []).map(c => ({ ...c, world: w.id })));
+// Fall som bara finns i Träna (den renodlade nybörjarmetodens sista våning), inte i lektionerna.
+const TWIST = "R' D' R D";
+const TRAIN_EXTRA_CASES = [
+  { id: 'beg_corner', name: 'Vitt hörn: Dansen', alg: DANCE, mask: 'firstLayer' },
+  { id: 'beg_edges', name: 'Gula kanterna (Sune)', alg: SUNE + ' U', mask: 'llEdges' },
+  { id: 'beg_cpos', name: 'Gula hörnen på plats', alg: "U R U' L' U R' U' L", mask: 'full' },
+  { id: 'beg_twist', name: 'Vrid hörnen', alg: [TWIST, TWIST, 'U', TWIST, TWIST, TWIST, TWIST, "U'"].join(' '), mask: 'oll' },
+];
+
+export const ALL_CASES = [
+  ...WORLDS.flatMap(w => (w.cases || []).map(c => ({ ...c, world: w.id }))),
+  ...TRAIN_EXTRA_CASES.map(c => ({ ...c, world: null })),
+];
+
+// Metoderna man väljer mellan i Träna. Varje grupp är ett steg i metoden;
+// world kopplar gruppen till stegets ikon på kartan.
+const G_CROSS = { id: 'cross', title: 'Gula korset', short: 'Kanterna i toppen gula', world: 'w5', cases: ['oll_line', 'oll_l', 'oll_dot'] };
+const G_F2L = { id: 'f2l', title: 'F2L-par', short: 'Hörn och kant samtidigt', world: 'w9', cases: ['f2l_1', 'f2l_2', 'f2l_3', 'f2l_4'] };
+export const TRAIN_METHODS = [
+  {
+    id: 'beg', world: 'w4', title: 'Nybörjarmetoden', short: 'Grunderna, våning för våning',
+    groups: [
+      { id: 'corners', title: 'Vita hörnen', short: 'Dansen tills hörnet sitter', world: 'w3', cases: ['beg_corner'] },
+      { id: 'mid', title: 'Mittenvåningen', short: 'Kanter till höger och vänster', world: 'w4', cases: ['mid_right', 'mid_left'] },
+      G_CROSS,
+      { id: 'edges', title: 'Gula kanterna', short: 'Sune flyttar kanterna', cases: ['beg_edges'] },
+      { id: 'cpos', title: 'Gula hörnen på plats', short: 'Rätt hörn fram till höger', cases: ['beg_cpos'] },
+      { id: 'twist', title: 'Vrid hörnen', short: "R' D' R D tills gult är uppåt", cases: ['beg_twist'] },
+    ],
+  },
+  {
+    id: 'lite', world: 'w9', title: 'Nybörjarmetoden med F2L', short: 'F2L-par och de enklaste OLL- och PLL-fallen',
+    groups: [
+      G_F2L,
+      G_CROSS,
+      { id: 'oll', title: 'Gula toppen', short: 'Sune och Anti-Sune', world: 'w6', cases: ['sune', 'antisune'] },
+      { id: 'pllc', title: 'Hörnen på plats', short: 'T-perm och Y-perm', world: 'w7', cases: ['tperm', 'yperm'] },
+      { id: 'plle', title: 'Kanterna på plats', short: 'Ua och Ub', world: 'w8', cases: ['ua', 'ub'] },
+    ],
+  },
+  {
+    id: 'cfop', world: 'w8', title: '2-Look CFOP', short: 'F2L-par, hela 2-look OLL och PLL',
+    groups: [
+      G_F2L,
+      G_CROSS,
+      { id: 'oll', title: 'Gula toppen', short: 'Alla sju hörnfallen', world: 'w6', cases: ['sune', 'antisune', 'oll_h', 'oll_pi', 'oll_u', 'oll_t', 'oll_bowtie'] },
+      { id: 'pllc', title: 'Hörnen på plats', short: 'T-perm och Y-perm', world: 'w7', cases: ['tperm', 'yperm'] },
+      { id: 'plle', title: 'Kanterna på plats', short: 'Ua, Ub, H och Z', world: 'w8', cases: ['ua', 'ub', 'h', 'z'] },
+    ],
+  },
+];
 export const caseById = id => ALL_CASES.find(c => c.id === id);

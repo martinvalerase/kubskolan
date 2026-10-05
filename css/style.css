@@ -429,6 +429,8 @@ code.alg {
 .train-txt small { color: var(--ink-2); line-height: 1.25; }
 .train-meta { font-size: .82rem; color: var(--ink-3); }
 .train-card .mini-btn { align-self: flex-start; margin-left: 68px; }
+.train-card.last { box-shadow: inset 0 0 0 2px var(--mint); }
+.last-tag { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--mint); color: var(--on-accent); font-family: var(--body); font-size: .72rem; font-weight: 700; vertical-align: middle; }
 .alg-group { font-family: var(--display); margin: 22px 0 10px; }
 .alg-list { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .alg-card { padding: 14px; display: grid; grid-template-columns: 116px 1fr; gap: 14px; align-items: center; }
@@ -506,6 +508,9 @@ code.alg {
 .field::placeholder { color: var(--ink-3); }
 .field.gate { max-width: 160px; }
 .av-preview { display: flex; justify-content: center; margin: 4px 0; }
+.avatar.photo { border-radius: 50%; object-fit: cover; }
+.photo-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+.photo-pick { cursor: pointer; }
 .pick-label { text-align: left; font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 12px 0 6px !important; }
 .pick { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .pick-btn { border: 0; background: var(--panel-2); border-radius: 16px; aspect-ratio: 1; display: grid; place-items: center; padding: 0; box-shadow: inset 0 0 0 3px transparent; }

@@ -153,6 +153,8 @@ export const MASKS = {
   oll: (h, d) => kind(h) === 1 || h[1] <= 0 || d === 'U',
   // Gula korset: bara kanternas gula syns på toppen, hörnen är gråa (de spelar ingen roll än)
   ollCross: (h, d) => kind(h) === 1 || h[1] <= 0 || (d === 'U' && kind(h) === 2),
+  // Gula kanterna på plats: alla kanter syns, hörnen i toppen är gråa
+  llEdges: h => kind(h) === 1 || h[1] <= 0 || kind(h) === 2,
 };
 
 // ---------- Vy ----------

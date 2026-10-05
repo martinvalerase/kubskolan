@@ -1,6 +1,6 @@
 import { CubeView, parseAlg, invertAlg, moveHint, moveInstruction } from './cube.js';
 import { topView } from './diagram.js';
-import { WORLDS, ALL_CASES, caseById } from './content.js';
+import { WORLDS, ALL_CASES, caseById, TRAIN_METHODS } from './content.js';
 import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES } from './icons.js';
 
 // ---------- Lagring ----------
@@ -42,7 +42,26 @@ function stars(p, w) {
 }
 
 const starsHtml = n => `<span class="stars" aria-label="${n} av 3 stjärnor">${[0, 1, 2].map(i => icon(i < n ? 'star' : 'starO', i < n ? 'on' : '')).join('')}</span>`;
-const pAvatar = (p, cls) => avatar(p.avatar, p.name, p.id, cls);
+const photoImg = (src, cls) => `<img class="avatar photo ${cls || ''}" src="${src}" alt="">`;
+const pAvatar = (p, cls) => p.photo ? photoImg(p.photo, cls) : avatar(p.avatar, p.name, p.id, cls);
+
+// Läser en bild från bildgalleriet, beskär den till en kvadrat och krymper den så att den ryms i lagringen.
+function loadPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const size = 192, side = Math.min(img.naturalWidth, img.naturalHeight);
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      canvas.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(); };
+    img.src = url;
+  });
+}
 
 // ---------- Hjälpfunktioner ----------
 
@@ -286,8 +305,9 @@ function route() {
   if (name === 'map') return renderMap();
   if (name === 'lesson') return renderLesson(a, parseInt(b || '0', 10));
   if (name === 'quiz') return renderQuiz(a);
-  if (name === 'train') return a ? renderTrainer(a) : renderTrainMenu();
-  if (name === 'algs') return renderAlgs(a);
+  if (name === 'train') return a ? renderMethod(a) : renderTrainMenu();
+  if (name === 'algs') return renderAlgs(a, b);
+  if (name === 'drill') return renderTrainer(a, b);
   if (name === 'timer') return renderTimer();
   if (name === 'parent') return renderParent();
   location.hash = '#/';
@@ -335,24 +355,34 @@ function renderProfiles() {
 
 function newProfileDialog() {
   let s = Math.floor(Math.random() * AV_SHAPES), c = Math.floor(Math.random() * AV_COLORS.length);
+  let photo = null;
   const w = modal(`
     <h2>Ny kubare</h2>
     <div class="av-preview"></div>
+    <div class="photo-row">
+      <label class="btn small ghost photo-pick">${icon('image')} Välj bild<input type="file" accept="image/*" hidden></label>
+      <button class="btn small ghost photo-clear hidden">Ta bort bild</button>
+    </div>
     <input class="field" maxlength="16" placeholder="Vad heter du?" autocomplete="off">
+    <div class="av-pickers">
     <p class="pick-label">Form</p>
     <div class="pick shapes">${Array.from({ length: AV_SHAPES }, (_, i) => `<button class="pick-btn" data-s="${i}" aria-label="Form ${i + 1}"></button>`).join('')}</div>
     <p class="pick-label">Färg</p>
-    <div class="pick colors">${AV_COLORS.map((col, i) => `<button class="pick-btn dot" data-c="${i}" style="--c:${col}" aria-label="Färg ${i + 1}"></button>`).join('')}</div>`,
+    <div class="pick colors">${AV_COLORS.map((col, i) => `<button class="pick-btn dot" data-c="${i}" style="--c:${col}" aria-label="Färg ${i + 1}"></button>`).join('')}</div>
+    </div>`,
   [['Avbryt', null, 'ghost'], [`${icon('check')} Klar`, () => {
     const name = w.querySelector('.field').value.trim() || 'Kubare';
     const p = newProfile(name, `s${s}c${c}`);
+    if (photo) p.photo = photo;
     db.profiles.push(p); db.current = p.id; save();
     location.hash = '#/map';
   }, 'primary']]);
   const input = w.querySelector('.field');
   const draw = () => {
     const name = input.value || '?';
-    w.querySelector('.av-preview').innerHTML = avatar(`s${s}c${c}`, name, '', 'xl');
+    w.querySelector('.av-preview').innerHTML = photo ? photoImg(photo, 'xl') : avatar(`s${s}c${c}`, name, '', 'xl');
+    w.querySelector('.photo-clear').classList.toggle('hidden', !photo);
+    w.querySelector('.av-pickers').classList.toggle('hidden', !!photo);
     w.querySelectorAll('[data-s]').forEach(b => {
       b.innerHTML = avatar(`s${b.dataset.s}c${c}`, name, '', 'sm');
       b.classList.toggle('sel', +b.dataset.s === s);
@@ -362,6 +392,14 @@ function newProfileDialog() {
   w.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { s = +b.dataset.s; draw(); });
   w.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { c = +b.dataset.c; draw(); });
   input.oninput = draw;
+  w.querySelector('.photo-pick input').onchange = async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try { photo = await loadPhoto(file); } catch { photo = null; }
+    draw();
+  };
+  w.querySelector('.photo-clear').onclick = () => { photo = null; draw(); };
   draw();
   setTimeout(() => input.focus(), 50);
 }
@@ -616,48 +654,73 @@ function renderQuiz(wid) {
 
 // ---------- Träning ----------
 
-// Stegen som har algoritmer att öva på, plus "alla".
-const TRAIN_WORLDS = WORLDS.filter(w => (w.cases || []).length);
-const trainCases = id => id === 'all' ? ALL_CASES : ALL_CASES.filter(c => c.world === id);
-const trainTitle = id => id === 'all' ? 'Alla algoritmer' : WORLDS[worldIndex(id)].title;
+// Träna är ordnat efter metod -> grupp (ett steg i metoden) -> fall.
+const methodById = m => TRAIN_METHODS.find(x => x.id === m);
+function methodGroup(m, g) {
+  const method = methodById(m);
+  if (!method) return null;
+  const toCases = grp => grp.cases.map(caseById);
+  if (g === 'all') return { method, title: `Alla i ${method.title}`, groups: method.groups.map(grp => [grp, toCases(grp)]), cases: method.groups.flatMap(toCases) };
+  const grp = method.groups.find(x => x.id === g);
+  return grp ? { method, title: grp.title, groups: [[grp, toCases(grp)]], cases: toCases(grp) } : null;
+}
+const methodCases = method => [...new Set(method.groups.flatMap(grp => grp.cases))].map(caseById);
+const groupIcon = grp => grp.world ? glyph(grp.world) : icon('cube');
 const levelHtml = box => `<div class="level" aria-label="Nivå ${box} av 5">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= box ? 'on' : ''}"></span>`).join('')}</div>`;
 
-function renderTrainMenu() {
-  const p = me();
-  const card = (id, ic, title, sub) => {
-    const cases = trainCases(id);
-    const sits = cases.filter(c => (p.boxes[c.id] || 0) >= 3).length;
-    return `
-    <section class="panel train-card">
-      <a class="train-main" href="#/train/${id}">
+function trainCard(p, href, ic, title, sub, cases, extra = '') {
+  const sits = cases.filter(c => (p.boxes[c.id] || 0) >= 3).length;
+  return `
+    <section class="panel train-card ${extra ? 'last' : ''}">
+      <a class="train-main" href="${href}">
         <span class="train-ic">${ic}</span>
-        <span class="train-txt"><b>${esc(title)}</b><small>${esc(sub)}</small>
+        <span class="train-txt"><b>${esc(title)}${extra}</b><small>${esc(sub)}</small>
           <span class="train-meta">${cases.length} ${cases.length === 1 ? 'algoritm' : 'algoritmer'} · ${sits} sitter</span></span>
         ${icon('next')}
       </a>
-      <a class="mini-btn" href="#/algs/${id}">${icon('cube')} Se algoritmerna</a>
     </section>`;
-  };
+}
+
+function renderTrainMenu() {
+  const p = me();
+  const last = methodById(p.trainMethod) ? p.trainMethod : null;
+  const methods = last ? [methodById(last), ...TRAIN_METHODS.filter(m => m.id !== last)] : TRAIN_METHODS;
   app.innerHTML = `
     <div class="screen train-menu">
       ${topbar({ middle: `<span class="topbar-title">${icon('target')} Träna</span>` })}
-      <p class="lead">Vad vill du öva på?</p>
+      <p class="lead">Vilken metod vill du öva på?</p>
       <div class="train-list">
-        ${TRAIN_WORLDS.map(w => card(w.id, glyph(w.id), `Steg ${worldIndex(w.id)} · ${w.title}`, w.short)).join('')}
-        ${card('all', icon('shuffle'), 'Alla algoritmer', 'Blandat från alla steg')}
+        ${methods.map(m => trainCard(p, `#/train/${m.id}`, groupIcon(m), m.title, m.short, methodCases(m),
+          m.id === last ? ' <span class="last-tag">Senast</span>' : '')).join('')}
       </div>
     </div>`;
 }
 
-function renderAlgs(id) {
+function renderMethod(m) {
   const p = me();
-  if (!trainCases(id || '').length) { location.hash = '#/train'; return; }
-  const groups = id === 'all' ? TRAIN_WORLDS.map(w => [w, trainCases(w.id)]) : [[WORLDS[worldIndex(id)], trainCases(id)]];
+  const method = methodById(m);
+  if (!method) { location.hash = '#/train'; return; }
+  if (p.trainMethod !== m) { p.trainMethod = m; save(); }
+  app.innerHTML = `
+    <div class="screen train-menu">
+      ${topbar({ back: '#/train', middle: `<span class="topbar-title">${icon('target')} ${esc(method.title)}</span>` })}
+      <p class="lead">Vad vill du öva på?</p>
+      <div class="train-list">
+        ${method.groups.map(grp => trainCard(p, `#/algs/${m}/${grp.id}`, groupIcon(grp), grp.title, grp.short, grp.cases.map(caseById))).join('')}
+        ${trainCard(p, `#/algs/${m}/all`, icon('shuffle'), `Alla i ${method.title}`, 'Blandat från alla steg', methodCases(method))}
+      </div>
+    </div>`;
+}
+
+function renderAlgs(m, g) {
+  const p = me();
+  const sel = methodGroup(m, g);
+  if (!sel) { location.hash = '#/train'; return; }
   app.innerHTML = `
     <div class="screen algs">
-      ${topbar({ back: '#/train', middle: `<span class="topbar-title">${icon('cube')} ${esc(trainTitle(id))}</span>` })}
-      ${groups.map(([w, cases]) => `
-        ${id === 'all' ? `<h3 class="alg-group">Steg ${worldIndex(w.id)} · ${esc(w.title)}</h3>` : `<p class="lead">${esc(w.short)}</p>`}
+      ${topbar({ back: `#/train/${m}`, middle: `<span class="topbar-title">${icon('cube')} ${esc(sel.title)}</span>` })}
+      ${sel.groups.map(([grp, cases]) => `
+        ${g === 'all' ? `<h3 class="alg-group">${esc(grp.title)}</h3>` : `<p class="lead">${esc(grp.short)}</p>`}
         <div class="alg-list">${cases.map(c => `
           <article class="panel alg-card">
             <div class="alg-fig" data-id="${c.id}"></div>
@@ -668,13 +731,13 @@ function renderAlgs(id) {
               <button class="btn small play-alg" data-id="${c.id}">${icon('play')} Visa på kuben</button>
             </div>
           </article>`).join('')}</div>`).join('')}
-      <div class="row"><a class="btn primary huge" href="#/train/${id}">${icon('target')} Öva på de här</a></div>
+      <div class="row"><a class="btn primary huge" href="#/drill/${m}/${g}">${icon('target')} Öva på de här</a></div>
     </div>`;
 
-  // Fall i toppen visas ovanifrån; F2L-fallen som en liten kub, eftersom de syns från sidan.
+  // Fall i toppen visas ovanifrån; F2L- och vita hörn-fallen som en liten kub, eftersom de syns från sidan.
   app.querySelectorAll('.alg-fig').forEach(el => {
     const c = caseById(el.dataset.id);
-    if (c.mask === 'f2l') {
+    if (c.mask === 'f2l' || c.mask === 'firstLayer') {
       const box = document.createElement('div');
       box.className = 'cube-box';
       el.appendChild(box);
@@ -697,10 +760,12 @@ function renderAlgs(id) {
   });
 }
 
-function renderTrainer(id) {
+function renderTrainer(m, g) {
   const p = me();
-  const pool = trainCases(id);
-  if (!pool.length) { location.hash = '#/train'; return; }
+  const sel = methodGroup(m, g);
+  if (!sel) { location.hash = '#/train'; return; }
+  const pool = sel.cases;
+  const groupOf = c => sel.groups.find(([, cases]) => cases.includes(c))[0];
 
   // Svåra fall (låg låda) kommer oftare
   const pick = () => {
@@ -716,15 +781,14 @@ function renderTrainer(id) {
     let c = pick();
     if (pool.length > 1) while (c === prev) c = pick();
     prev = c;
-    const w = WORLDS[worldIndex(c.world)];
     const box = p.boxes[c.id] || 0;
     app.innerHTML = `
       <div class="screen trainer">
-        ${topbar({ back: '#/train', middle: `<span class="topbar-title">${icon('target')} ${esc(trainTitle(id))}</span>`, right: `<a class="mini-btn" href="#/algs/${id}">${icon('cube')} Algoritmer</a>` })}
+        ${topbar({ back: `#/algs/${m}/${g}`, middle: `<span class="topbar-title">${icon('target')} ${esc(sel.title)}</span>`, right: `<a class="mini-btn" href="#/algs/${m}/${g}">${icon('cube')} Algoritmer</a>` })}
         <div class="split">
           <div class="panel cube-panel trainer-cube"></div>
           <div class="panel text-panel trainer-side">
-            <p class="eyebrow">${esc(w.title)}</p>
+            <p class="eyebrow">${esc(groupOf(c).title)}</p>
             <h2 class="case-name">Vad gör du här?</h2>
             ${levelHtml(box)}
             <p class="hint muted">Gör det på din kub, eller tänk efter. Tryck sedan på knappen.</p>
