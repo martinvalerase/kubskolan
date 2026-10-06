@@ -281,8 +281,13 @@ function createPlayer(host, cfg) {
       following = !following;
       playing = false;
       b.classList.toggle('on', following);
+      b.querySelector('span').textContent = following ? 'Sluta följa' : 'Följ med';
       followEl.classList.toggle('hidden', !following);
+      // I följ med-läget göms dragraden och spelknapparna, så att allt ryms utan att man behöver scrolla
+      const player = host.querySelector('.player');
+      player.classList.toggle('following', following);
       update();
+      if (following) requestAnimationFrame(() => player.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
     }
   });
 

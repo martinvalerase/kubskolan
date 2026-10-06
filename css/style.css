@@ -351,6 +351,15 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02
 .follow-text { margin: 0; font-family: var(--display); font-weight: 700; font-size: 1.35rem; }
 .follow-nav { display: flex; gap: 10px; align-items: center; }
 .follow-nav .btn { min-width: 200px; }
+.player.following { gap: 10px; }
+.player.following .chips-wrap,
+.player.following .controls .ctl:not(.follow-btn) { display: none; }
+.player.following .cube-box { height: min(36vh, 380px); }
+.player.following .follow { padding: 12px 14px; gap: 6px; }
+.player.following .follow-move b { font-size: 2.8rem; }
+.player.following .follow-move span { font-size: 2rem; }
+.player.following .follow-text { font-size: 1.15rem; }
+.player.following .follow-nav .btn { min-width: 170px; }
 
 /* Minifrågor på knappsatsen */
 
