@@ -782,6 +782,14 @@ function renderTrainer(m, g) {
     if (pool.length > 1) while (c === prev) c = pick();
     prev = c;
     const box = p.boxes[c.id] || 0;
+    // Tre svar: det rätta och två andra algoritmer, helst från samma steg, sedan samma metod, sedan alla.
+    const wrong = [];
+    for (const tier of [groupOf(c).cases, methodCases(methodById(m)), ALL_CASES]) {
+      for (const x of shuffle(tier.map(t => typeof t === 'string' ? caseById(t) : t))) {
+        if (wrong.length < 2 && x.alg !== c.alg && !wrong.includes(x.alg)) wrong.push(x.alg);
+      }
+    }
+    const options = shuffle([[c.alg, 0], [wrong[0], 1], [wrong[1], 2]]);
     app.innerHTML = `
       <div class="screen trainer">
         ${topbar({ back: `#/algs/${m}/${g}`, middle: `<span class="topbar-title">${icon('target')} ${esc(sel.title)}</span>`, right: `<a class="mini-btn" href="#/algs/${m}/${g}">${icon('cube')} Algoritmer</a>` })}
@@ -791,39 +799,35 @@ function renderTrainer(m, g) {
             <p class="eyebrow">${esc(groupOf(c).title)}</p>
             <h2 class="case-name">Vad gör du här?</h2>
             ${levelHtml(box)}
-            <p class="hint muted">Gör det på din kub, eller tänk efter. Tryck sedan på knappen.</p>
-            <button class="btn primary huge reveal">${icon('eye')} Visa lösningen</button>
-            <div class="rate hidden">
-              <p class="rate-label">Hur gick det?</p>
-              <div class="rate-row">
-                <button class="btn rate-btn r0"><span class="dot hard"></span>Svårt</button>
-                <button class="btn rate-btn r1"><span class="dot mid"></span>Okej</button>
-                <button class="btn rate-btn r2"><span class="dot easy"></span>Lätt</button>
-              </div>
-            </div>
+            <p class="hint muted">Vilken algoritm löser det?</p>
+            <div class="answers alg-answers">${options.map(([a, k]) => `<button class="btn answer" data-k="${k}"><code>${esc(a)}</code></button>`).join('')}</div>
+            <div class="feedback"></div>
           </div>
         </div>
       </div>`;
     const cubeHost = app.querySelector('.trainer-cube');
     createPlayer(cubeHost, { setupInv: c.alg, mask: c.mask });
-    app.querySelector('.reveal').onclick = e => {
-      e.currentTarget.remove();
-      app.querySelector('.case-name').innerHTML = `${esc(c.name)}<code class="alg">${esc(c.alg)}</code>`;
-      app.querySelector('.hint').textContent = 'Tryck på spela för att se den på kuben.';
-      app.querySelector('.rate').classList.remove('hidden');
-      clearViews();
-      createPlayer(cubeHost, { setupInv: c.alg, alg: c.alg, mask: c.mask });
-    };
-    const rate = delta => {
+    app.querySelectorAll('.answer').forEach(btn => btn.onclick = () => {
+      const ok = btn.dataset.k === '0';
+      app.querySelectorAll('.answer').forEach(x => {
+        x.disabled = true;
+        if (x.dataset.k === '0') x.classList.add('right');
+        else if (x === btn) x.classList.add('wrong');
+      });
       const b = p.boxes[c.id] || 0;
-      p.boxes[c.id] = delta < 0 ? 0 : delta === 0 ? Math.max(1, b) : Math.min(5, b + 1);
+      p.boxes[c.id] = ok ? Math.min(5, b + 1) : Math.max(0, b - 1);
       save();
       if (p.boxes[c.id] === 5 && b < 5) confetti();
-      show();
-    };
-    app.querySelector('.r0').onclick = () => rate(-1);
-    app.querySelector('.r1').onclick = () => rate(0);
-    app.querySelector('.r2').onclick = () => rate(1);
+      app.querySelector('.case-name').textContent = c.name;
+      app.querySelector('.level').outerHTML = levelHtml(p.boxes[c.id]);
+      app.querySelector('.hint').textContent = 'Tryck på spela för att se lösningen på kuben.';
+      const fb = app.querySelector('.feedback');
+      fb.innerHTML = `<p class="fb-title ${ok ? 'ok' : ''}">${ok ? `${icon('check')} Rätt!` : 'Nästan! Det gröna är rätt.'}</p>
+        <button class="btn primary nextq">Nästa ${icon('next')}</button>`;
+      fb.querySelector('.nextq').onclick = show;
+      clearViews();
+      createPlayer(cubeHost, { setupInv: c.alg, alg: c.alg, mask: c.mask });
+    });
   };
   show();
 }

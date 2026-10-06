@@ -288,7 +288,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02
 .chip.done { opacity: .3; }
 .chip.cur { background: var(--mint); color: var(--on-accent); }
 .chip.cur i { color: var(--on-accent); }
-.controls { display: flex; justify-content: center; gap: 8px; }
+.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .ctl {
   width: 54px; height: 50px; border: 0; border-radius: 16px; background: var(--panel-2); color: var(--ink);
   display: grid; place-items: center;
@@ -387,6 +387,9 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02
 .feedback:empty { display: none; }
 .fb-title { margin: 0; font-family: var(--display); font-size: 1.3rem; display: inline-flex; gap: 8px; align-items: center; }
 .fb-title.ok { color: var(--mint); }
+.alg-answers { grid-template-columns: 1fr; }
+.alg-answers .answer { min-height: 54px; padding: 10px 14px; font-size: 1rem; }
+.alg-answers code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 700; letter-spacing: .02em; overflow-wrap: anywhere; white-space: normal; }
 code.alg {
   display: inline-block; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 700; font-size: 1rem;
   background: var(--panel-2); color: var(--lime); padding: 6px 12px; border-radius: 12px; margin: 4px 0;
@@ -404,6 +407,7 @@ code.alg {
 
 /* ---------- Träning ---------- */
 .split { display: grid; gap: 16px; }
+.split > * { min-width: 0; }
 @media (min-width: 760px) and (orientation: landscape) {
   .split { grid-template-columns: 1.1fr 1fr; align-items: center; }
 }
