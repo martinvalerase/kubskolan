@@ -1,7 +1,7 @@
 import { CubeView, parseAlg, invertAlg, moveHint, moveInstruction } from './cube.js';
 import { topView } from './diagram.js';
 import { WORLDS, ALL_CASES, caseById, TRAIN_METHODS } from './content.js';
-import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES } from './icons.js';
+import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES, AV_FIGURES } from './icons.js';
 
 // ---------- Lagring ----------
 
@@ -360,6 +360,7 @@ function renderProfiles() {
 
 function newProfileDialog() {
   let s = Math.floor(Math.random() * AV_SHAPES), c = Math.floor(Math.random() * AV_COLORS.length);
+  let f = 1 + Math.floor(Math.random() * (AV_FIGURES.length - 1)); // en figur från start, inte ett frågetecken
   let photo = null;
   const w = modal(`
     <h2>Ny kubare</h2>
@@ -370,6 +371,8 @@ function newProfileDialog() {
     </div>
     <input class="field" maxlength="16" placeholder="Vad heter du?" autocomplete="off">
     <div class="av-pickers">
+    <p class="pick-label">Figur</p>
+    <div class="pick figures">${AV_FIGURES.map((name, i) => i ? `<button class="pick-btn" data-f="${i}" aria-label="${name}"></button>` : '').join('')}</div>
     <p class="pick-label">Form</p>
     <div class="pick shapes">${Array.from({ length: AV_SHAPES }, (_, i) => `<button class="pick-btn" data-s="${i}" aria-label="Form ${i + 1}"></button>`).join('')}</div>
     <p class="pick-label">Färg</p>
@@ -377,7 +380,7 @@ function newProfileDialog() {
     </div>`,
   [['Avbryt', null, 'ghost'], [`${icon('check')} Klar`, () => {
     const name = w.querySelector('.field').value.trim() || 'Kubare';
-    const p = newProfile(name, `s${s}c${c}`);
+    const p = newProfile(name, `s${s}c${c}f${f}`);
     if (photo) p.photo = photo;
     db.profiles.push(p); db.current = p.id; save();
     location.hash = '#/map';
@@ -385,17 +388,23 @@ function newProfileDialog() {
   const input = w.querySelector('.field');
   const draw = () => {
     const name = input.value || '?';
-    w.querySelector('.av-preview').innerHTML = photo ? photoImg(photo, 'xl') : avatar(`s${s}c${c}`, name, '', 'xl');
+    const av = (ss, cc, ff) => `s${ss}c${cc}f${ff}`;
+    w.querySelector('.av-preview').innerHTML = photo ? photoImg(photo, 'xl') : avatar(av(s, c, f), name, '', 'xl');
+    w.querySelectorAll('[data-f]').forEach(b => {
+      b.innerHTML = avatar(av(s, c, b.dataset.f), name, '', 'sm');
+      b.classList.toggle('sel', +b.dataset.f === f);
+    });
     w.querySelector('.photo-clear').classList.toggle('hidden', !photo);
     w.querySelector('.av-pickers').classList.toggle('hidden', !!photo);
     w.querySelectorAll('[data-s]').forEach(b => {
-      b.innerHTML = avatar(`s${b.dataset.s}c${c}`, name, '', 'sm');
+      b.innerHTML = avatar(av(b.dataset.s, c, f), name, '', 'sm');
       b.classList.toggle('sel', +b.dataset.s === s);
     });
     w.querySelectorAll('[data-c]').forEach(b => b.classList.toggle('sel', +b.dataset.c === c));
   };
   w.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { s = +b.dataset.s; draw(); });
   w.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { c = +b.dataset.c; draw(); });
+  w.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { f = +b.dataset.f; draw(); });
   input.oninput = draw;
   w.querySelector('.photo-pick input').onchange = async e => {
     const file = e.target.files[0];
@@ -431,6 +440,9 @@ function askUnlockCode(msg) {
   input.focus();
 }
 
+// Stegen på kartan ligger under knappen "Äventyret". Stängd från start; förblir öppen medan appen är igång.
+let adventureOpen = false;
+
 function renderMap() {
   const p = me();
   const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
@@ -450,7 +462,12 @@ function renderMap() {
         <a class="tile" href="#/train"><span class="tile-ic">${icon('target')}</span><b>Träna</b><small>Algoritmer</small></a>
         <a class="tile alt" href="#/timer"><span class="tile-ic">${icon('timer')}</span><b>Tidtagning</b><small>Hur snabb är du?</small></a>
       </div>
-      <div class="path-wrap">
+      <button class="adventure-btn ${adventureOpen ? 'open' : ''}" aria-expanded="${adventureOpen}">
+        <span class="tile-ic">${icon('flag')}</span>
+        <span class="adv-txt"><b>Äventyret</b><small>${doneCount} av ${WORLDS.length} steg klara</small></span>
+        <span class="adv-chev">${icon('next')}</span>
+      </button>
+      <div class="path-wrap ${adventureOpen ? '' : 'hidden'}">
         <svg class="path-line" aria-hidden="true"><path class="track"/><path class="trail"/></svg>
         <ol class="path">
           ${WORLDS.map((w, i) => {
@@ -474,6 +491,13 @@ function renderMap() {
         </ol>
       </div>
     </div>`;
+
+  app.querySelector('.adventure-btn').onclick = e => {
+    adventureOpen = !adventureOpen;
+    e.currentTarget.classList.toggle('open', adventureOpen);
+    e.currentTarget.setAttribute('aria-expanded', adventureOpen);
+    app.querySelector('.path-wrap').classList.toggle('hidden', !adventureOpen);
+  };
 
   const unlockBtn = app.querySelector('.unlock-btn');
   if (unlockBtn) unlockBtn.onclick = () => askUnlockCode('');
@@ -1015,7 +1039,7 @@ function renderParent() {
 // Äldre profiler (emoji-avatarer) får en form istället – sparas så att den blir stabil.
 let migrated = false;
 for (const p of db.profiles) {
-  if (!/^s\d+c\d+$/.test(p.avatar || '')) {
+  if (!/^s\d+c\d+(f\d+)?$/.test(p.avatar || '')) {
     const { s, c } = parseAvatar(p.avatar, p.id);
     p.avatar = `s${s}c${c}`;
     migrated = true;

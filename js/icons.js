@@ -3,6 +3,7 @@
 const P = {
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
+  flag: '<path d="M5 21V4M5 4.5c4-2.5 7 2.5 14 0v9c-7 2.5-10-2.5-14 0"/>',
   next: '<path d="M9 5l7 7-7 7"/>',
   play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
   pause: '<path d="M8 5.5v13M16 5.5v13"/>',
@@ -68,7 +69,7 @@ export function glyph(id, cls = '') {
   return `<svg class="glyph ${cls}" viewBox="0 0 24 24" aria-hidden="true">${cells}</svg>`;
 }
 
-// ---------- Avatarer: form + färg + initial ----------
+// ---------- Avatarer: form + färg + figur (eller initial) ----------
 
 export const AV_COLORS = ['#8EE3B1', '#C9E86B', '#5FC4A8', '#E9F2DC', '#A8D27F', '#E8D9A6'];
 const SHAPES = [
@@ -81,20 +82,62 @@ const SHAPES = [
 ];
 export const AV_SHAPES = SHAPES.length;
 
+// Coola figurer i mitten av avataren (i stället för en bokstav). Ritade i en 48×48-ruta.
+const INK = '#0B2219', FACE = '#FFF8E7';
+const SHADES = (y, x1 = 14.5, x2 = 25.5) => `
+  <path d="M${x1 - 1} ${y}h${x2 - x1 + 10}" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>
+  <rect x="${x1}" y="${y - 1}" width="8" height="5.5" rx="2.4" fill="${INK}"/>
+  <rect x="${x2}" y="${y - 1}" width="8" height="5.5" rx="2.4" fill="${INK}"/>
+  <path d="M${x1 + 1.8} ${y + .6}l2.2 0M${x2 + 1.8} ${y + .6}l2.2 0" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>`;
+const FIGURES = [
+  null, // bokstav
+  // Cool katt
+  `<g stroke="${INK}" stroke-width="2" stroke-linejoin="round">
+    <path d="M13 22l1-10 7 6M35 22l-1-10-7 6" fill="${FACE}"/>
+    <ellipse cx="24" cy="27" rx="12" ry="10.5" fill="${FACE}"/>
+    <path d="M10 29l7 .5M10 33l7-1.5M38 29l-7 .5M38 33l-7-1.5" fill="none" stroke-linecap="round" stroke-width="1.5"/>
+    <path d="M22.5 30.5h3L24 32z" fill="#F28AA0" stroke-width="1.2"/>
+    <path d="M21 34.5c1.5 1.3 4.5 1.3 6.5-.5" fill="none" stroke-linecap="round" stroke-width="1.6"/>
+  </g>${SHADES(24.5)}`,
+  // Cool häst
+  `<g stroke="${INK}" stroke-width="2" stroke-linejoin="round">
+    <path d="M17 15l1.5-7 4.5 6M31 15l-1.5-7-4.5 6" fill="${FACE}"/>
+    <path d="M14.5 21c0-6 4.5-9 9.5-9s9.5 3 9.5 9l-1 13c-.4 5-4 8-8.5 8s-8.1-3-8.5-8z" fill="#C98B5A"/>
+    <path d="M24 12c-2 2-6 2.5-7 6 3-1 6-1 8-3 0 2 2 3 4 3-1-3-2-5-5-6z" fill="${INK}"/>
+    <ellipse cx="24" cy="37" rx="7.5" ry="5" fill="#E8B48A"/>
+    <path d="M21 36.5v.5M27 36.5v.5" stroke-linecap="round" stroke-width="2.4"/>
+  </g>${SHADES(25)}`,
+  // Cool snubbe
+  `<g stroke="${INK}" stroke-width="2" stroke-linejoin="round">
+    <circle cx="24" cy="27" r="11.5" fill="#F2C9A0"/>
+    <path d="M12.5 24c-.5-8 4.5-12.5 11.5-12.5 6 0 9.5 2.5 11 5.5-4-1-6 1-11 1-4 0-7.5 1.5-8 6z" fill="${INK}"/>
+    <path d="M30 13c3-3 7-3 9-1-2 0-4 1-5.5 3z" fill="${INK}"/>
+    <path d="M19.5 33c2.5 2.5 7 2.5 9-.5" fill="none" stroke-linecap="round" stroke-width="1.8"/>
+  </g>${SHADES(25)}`,
+  // Cool sol
+  `<g stroke="${INK}" stroke-width="2" stroke-linejoin="round">
+    <path d="M24 5.5l2.6 5.5h-5.2zM24 42.5l2.6-5.5h-5.2zM5.5 24l5.5 2.6v-5.2zM42.5 24L37 26.6v-5.2zM10.9 10.9l5.7 2-3.7 3.7zM37.1 37.1l-5.7-2 3.7-3.7zM37.1 10.9l-2 5.7-3.7-3.7zM10.9 37.1l2-5.7 3.7 3.7z" fill="#FFD500"/>
+    <circle cx="24" cy="24" r="11.5" fill="#FFD500"/>
+    <path d="M19 29.5c2.5 2.5 7.5 2.5 10 0" fill="none" stroke-linecap="round" stroke-width="1.8"/>
+  </g>${SHADES(22)}`,
+];
+export const AV_FIGURES = ['Bokstav', 'Katt', 'Häst', 'Snubbe', 'Sol'];
+
 export function parseAvatar(av, id = '') {
-  const m = /^s(\d)c(\d)$/.exec(av || '');
-  if (m) return { s: +m[1] % SHAPES.length, c: +m[2] % AV_COLORS.length };
+  const m = /^s(\d)c(\d)(?:f(\d))?$/.exec(av || '');
+  if (m) return { s: +m[1] % SHAPES.length, c: +m[2] % AV_COLORS.length, f: +(m[3] || 0) % FIGURES.length };
   // äldre profiler (emoji) får en form utifrån sitt id
   let h = 0;
   for (const ch of String(id) + String(av)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return { s: h % SHAPES.length, c: (h >> 3) % AV_COLORS.length };
+  return { s: h % SHAPES.length, c: (h >> 3) % AV_COLORS.length, f: 0 };
 }
 
 export function avatar(av, name = '', id = '', cls = '') {
-  const { s, c } = parseAvatar(av, id);
+  const { s, c, f } = parseAvatar(av, id);
   const letter = (name.trim()[0] || '?').toUpperCase();
+  const inner = FIGURES[f] || `<text x="24" y="25" text-anchor="middle" dominant-baseline="central">${letter.replace(/[<&>]/g, '')}</text>`;
   return `<svg class="avatar ${cls}" viewBox="0 0 48 48" aria-hidden="true" style="color:${AV_COLORS[c]}">
     <g fill="currentColor">${SHAPES[s]}</g>
-    <text x="24" y="25" text-anchor="middle" dominant-baseline="central">${letter.replace(/[<&>]/g, '')}</text>
+    ${inner}
   </svg>`;
 }
