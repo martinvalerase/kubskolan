@@ -170,16 +170,15 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02
 .add-circle .ic { width: 36px; height: 36px; }
 .pname { font-family: var(--display); font-weight: 700; font-size: 1.25rem; }
 .pmeta { font-size: .85rem; color: var(--ink-2); }
-.parent-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 44px; color: var(--ink-2); padding: 10px 16px; border-radius: 14px; }
-.parent-link:active { background: var(--panel); }
 
 /* ---------- Karta ---------- */
 .map { max-width: 640px; }
 .map-head { display: flex; align-items: center; gap: 14px; margin: 6px 0 20px; }
 .map-head h1 { margin: 0; font-size: 2rem; }
 .map-head .sub { margin: 2px 0 0; color: var(--ink-2); }
-.map-head .unlock-btn { margin-left: auto; width: 40px; height: 40px; border-radius: 14px; color: var(--ink-3); }
-.map-head .unlock-btn .ic { width: 20px; height: 20px; }
+.map-head .head-actions { margin-left: auto; display: flex; gap: 8px; }
+.map-head .head-actions .icon-btn { width: 40px; height: 40px; border-radius: 14px; color: var(--ink-3); }
+.map-head .head-actions .icon-btn .ic { width: 20px; height: 20px; }
 .who { border-radius: 50%; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 26px; }
 .tile {

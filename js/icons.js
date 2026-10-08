@@ -4,6 +4,7 @@ const P = {
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
   flag: '<path d="M5 21V4M5 4.5c4-2.5 7 2.5 14 0v9c-7 2.5-10-2.5-14 0"/>',
+  chart: '<path d="M5 20v-8M12 20V5M19 20v-9M3 20.5h18"/>',
   next: '<path d="M9 5l7 7-7 7"/>',
   play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
   pause: '<path d="M8 5.5v13M16 5.5v13"/>',

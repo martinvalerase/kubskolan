@@ -304,7 +304,7 @@ function createPlayer(host, cfg) {
 function route() {
   clearScreen();
   const [name, a, b] = location.hash.replace(/^#\/?/, '').split('/');
-  if (!me() && !['overview', 'parent', ''].includes(name || '')) { location.hash = '#/'; return; }
+  if (!me() && name) { location.hash = '#/'; return; }
   window.scrollTo(0, 0);
   if (!name) return renderProfiles();
   if (name === 'map') return renderMap();
@@ -350,7 +350,6 @@ function renderProfiles() {
           <span class="pname">Ny kubare</span>
         </button>
       </div>
-      <a class="parent-link" href="#/overview">${icon('users')} Översikt</a>
     </div>`;
   app.querySelectorAll('.profile-card').forEach(b => b.onclick = () => {
     if (b.dataset.id === 'new') return newProfileDialog();
@@ -457,7 +456,10 @@ function renderMap() {
           <h1>Hej ${esc(p.name)}!</h1>
           <p class="sub">${doneCount === WORLDS.length ? 'Du har klarat alla steg.' : `${doneCount} av ${WORLDS.length} steg klara`}</p>
         </div>
-        ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="Lås upp alla steg">${icon('lock')}</button>`}
+        <div class="head-actions">
+          ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="Lås upp alla steg">${icon('lock')}</button>`}
+          <a class="icon-btn" href="#/overview" aria-label="Översikt">${icon('chart')}</a>
+        </div>
       </header>
       <div class="tiles">
         <a class="tile" href="#/train"><span class="tile-ic">${icon('target')}</span><b>Träna</b><small>Algoritmer</small></a>
@@ -962,12 +964,12 @@ function renderTimer() {
 
 // ---------- Översikt ----------
 
+// Den valda kubarens egen översikt
 function renderOverview() {
   app.innerHTML = `
     <div class="screen parent">
-      ${topbar({ back: '#/', middle: `<span class="topbar-title">${icon('users')} Översikt</span>` })}
-      ${db.profiles.length ? '' : '<p class="muted">Inga profiler än.</p>'}
-      ${db.profiles.map(p => {
+      ${topbar({ back: '#/map', middle: `<span class="topbar-title">${icon('chart')} Översikt</span>` })}
+      ${[me()].map(p => {
         const best = p.times.length ? fmt(Math.min(...p.times.map(t => t.ms))) : '–';
         const week = p.times.filter(t => t.at > Date.now() - 7 * 864e5).length;
         const mastered = ALL_CASES.filter(c => (p.boxes[c.id] || 0) >= 3).length;
@@ -1009,7 +1011,7 @@ function renderOverview() {
       [['Avbryt', null, 'ghost'], ['Ta bort', () => {
         db.profiles = db.profiles.filter(x => x.id !== p.id);
         if (db.current === p.id) db.current = null;
-        save(); renderOverview();
+        save(); location.hash = '#/';
       }, 'danger']]);
   });
 }
