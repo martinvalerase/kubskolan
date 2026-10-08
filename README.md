@@ -1,6 +1,6 @@
 # Kubskolan
 
-A Swedish web app that teaches kids (8–10) to solve the Rubik's cube with CFOP, step by step.
+A Swedish web app that teaches anyone, young or old, to solve the Rubik's cube with CFOP, step by step — playful and visual.
 Plain HTML/CSS/JS with no build step and no dependencies. Works offline once loaded, and can be installed on an iPad or phone home screen.
 
 ## Run locally (PC)
@@ -50,7 +50,7 @@ curl -fsSL https://raw.githubusercontent.com/martinvalerase/kubskolan/main/deplo
 ```
 The script is safe to re-run. Run a deploy manually with `gh workflow run deploy-vps.yml`.
 
-Progress is stored per device in the browser (localStorage). Each child gets their own profile on the device.
+Progress is stored per device in the browser (localStorage). Each person gets their own profile on the device.
 
 ## Structure
 
@@ -58,7 +58,7 @@ Progress is stored per device in the browser (localStorage). Each child gets the
 |---|---|
 | `js/content.js` | All lessons, texts and algorithms (edit here to change content) |
 | `js/cube.js` | 3D cube: model, CSS-3D rendering, animation, notation parser |
-| `js/app.js` | Screens: profiles, map, lessons, quiz, trainer, timer, parent view |
+| `js/app.js` | Screens: profiles, map, lessons, quiz, trainer, timer, overview |
 | `css/style.css` | Styling |
 | `sw.js` | Offline cache — bump `VERSION` when you deploy changes |
 | `tools/make-icons.ps1` | Regenerates the PNG icons |

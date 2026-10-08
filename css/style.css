@@ -499,7 +499,7 @@ code.alg {
 .time-list li.best { background: var(--lime); color: var(--on-accent); font-weight: 700; }
 .time-list .ic { width: 16px; height: 16px; }
 
-/* ---------- Föräldrar ---------- */
+/* ---------- Översikt ---------- */
 .parent { max-width: 760px; }
 .pcard { padding: 18px 20px; margin-bottom: 14px; }
 .pcard h3 { margin: 0 0 12px; display: flex; align-items: center; gap: 10px; font-size: 1.3rem; }

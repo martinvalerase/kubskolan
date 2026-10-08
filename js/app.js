@@ -304,7 +304,7 @@ function createPlayer(host, cfg) {
 function route() {
   clearScreen();
   const [name, a, b] = location.hash.replace(/^#\/?/, '').split('/');
-  if (!me() && !['parent', ''].includes(name || '')) { location.hash = '#/'; return; }
+  if (!me() && !['overview', 'parent', ''].includes(name || '')) { location.hash = '#/'; return; }
   window.scrollTo(0, 0);
   if (!name) return renderProfiles();
   if (name === 'map') return renderMap();
@@ -314,7 +314,8 @@ function route() {
   if (name === 'algs') return renderAlgs(a, b);
   if (name === 'drill') return renderTrainer(a, b);
   if (name === 'timer') return renderTimer();
-  if (name === 'parent') return renderParent();
+  if (name === 'overview') return renderOverview();
+  if (name === 'parent') { location.hash = '#/overview'; return; } // gamla länkar
   location.hash = '#/';
 }
 window.addEventListener('hashchange', route);
@@ -349,7 +350,7 @@ function renderProfiles() {
           <span class="pname">Ny kubare</span>
         </button>
       </div>
-      <a class="parent-link" href="#/parent">${icon('users')} För föräldrar</a>
+      <a class="parent-link" href="#/overview">${icon('users')} Översikt</a>
     </div>`;
   app.querySelectorAll('.profile-card').forEach(b => b.onclick = () => {
     if (b.dataset.id === 'new') return newProfileDialog();
@@ -420,7 +421,7 @@ function newProfileDialog() {
 
 // ---------- Karta ----------
 
-// Låset på kartan: rätt kod låser upp alla steg (samma som föräldrasidans reglage)
+// Låset på kartan: rätt kod låser upp alla steg (samma som översiktens reglage)
 const UNLOCK_CODE = '00000';
 
 function askUnlockCode(msg) {
@@ -959,33 +960,12 @@ function renderTimer() {
   drawTimes();
 }
 
-// ---------- Föräldrar ----------
+// ---------- Översikt ----------
 
-let parentOk = false;
-
-function renderParent() {
-  if (!parentOk) {
-    const a = 6 + Math.floor(Math.random() * 4), b = 6 + Math.floor(Math.random() * 4);
-    app.innerHTML = `
-      <div class="screen center-screen">
-        <div class="medal big">${icon('users')}</div>
-        <h2>För föräldrar</h2>
-        <p class="muted">Vad är ${a} × ${b}?</p>
-        <input class="field gate" inputmode="numeric" autocomplete="off">
-        <div class="row"><a class="btn ghost" href="#/">Tillbaka</a><button class="btn primary go">OK</button></div>
-      </div>`;
-    const go = () => {
-      if (+app.querySelector('.gate').value === a * b) { parentOk = true; renderParent(); }
-      else app.querySelector('.gate').value = '';
-    };
-    app.querySelector('.go').onclick = go;
-    app.querySelector('.gate').onkeydown = e => { if (e.key === 'Enter') go(); };
-    return;
-  }
-
+function renderOverview() {
   app.innerHTML = `
     <div class="screen parent">
-      ${topbar({ back: '#/', middle: `<span class="topbar-title">${icon('users')} Föräldraöversikt</span>` })}
+      ${topbar({ back: '#/', middle: `<span class="topbar-title">${icon('users')} Översikt</span>` })}
       ${db.profiles.length ? '' : '<p class="muted">Inga profiler än.</p>'}
       ${db.profiles.map(p => {
         const best = p.times.length ? fmt(Math.min(...p.times.map(t => t.ms))) : '–';
@@ -1020,7 +1000,7 @@ function renderParent() {
     modal(`<h2>Nollställa ${esc(p.name)}?</h2><p class="muted">Alla stjärnor och tider försvinner.</p>`,
       [['Avbryt', null, 'ghost'], ['Nollställ', () => {
         Object.assign(p, newProfile(p.name, p.avatar), { id: p.id });
-        save(); renderParent();
+        save(); renderOverview();
       }, 'danger']]);
   });
   app.querySelectorAll('.delete').forEach(b => b.onclick = () => {
@@ -1029,7 +1009,7 @@ function renderParent() {
       [['Avbryt', null, 'ghost'], ['Ta bort', () => {
         db.profiles = db.profiles.filter(x => x.id !== p.id);
         if (db.current === p.id) db.current = null;
-        save(); renderParent();
+        save(); renderOverview();
       }, 'danger']]);
   });
 }
