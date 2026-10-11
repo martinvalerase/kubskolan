@@ -63,6 +63,20 @@ function loadPhoto(file) {
   });
 }
 
+// ---------- Statistik (GoatCounter, utan cookies) ----------
+
+// Skickar bara skärmvisningar och händelser med steg- och fallnamn. Aldrig namn, profiler eller tider.
+// Skriptet laddas asynkront, så det som händer innan det är klart köas.
+const trackQueue = [];
+function track(path, event = false) {
+  const gc = window.goatcounter;
+  if (gc && gc.count) { try { gc.count({ path, title: path, event }); } catch { /* ignoreras */ } }
+  else trackQueue.push([path, event]);
+}
+document.querySelector('script[data-goatcounter]')?.addEventListener('load', () => {
+  while (trackQueue.length) track(...trackQueue.shift());
+});
+
 // ---------- Hjälpfunktioner ----------
 
 const app = document.getElementById('app');
@@ -306,6 +320,7 @@ function route() {
   const [name, a, b] = location.hash.replace(/^#\/?/, '').split('/');
   if (!me() && name) { location.hash = '#/'; return; }
   window.scrollTo(0, 0);
+  track('/' + (name ? [name, a, b].filter(x => x != null).join('/') : ''));
   if (!name) return renderProfiles();
   if (name === 'map') return renderMap();
   if (name === 'lesson') return renderLesson(a, parseInt(b || '0', 10));
@@ -602,6 +617,7 @@ function renderLesson(wid, n) {
     [['Stäng', null, 'ghost']]);
     wrap.querySelectorAll('.help-item').forEach(b => b.onclick = () => {
       const to = step.help[+b.dataset.k][1];
+      track(`hjalp/${w.id}/steg-${n}/till-${to}`, true);
       wrap.remove();
       location.hash = `#/lesson/${w.id}/${to}`;
     });
@@ -646,6 +662,7 @@ function renderQuiz(wid) {
     app.querySelectorAll('.answer').forEach(b => b.onclick = () => {
       const ok = b.dataset.k === '0';
       if (ok) right++;
+      track(`fraga/${w.id}/${q + 1}/${ok ? 'ratt' : 'fel'}`, true);
       app.querySelectorAll('.answer').forEach(x => {
         x.disabled = true;
         if (x.dataset.k === '0') x.classList.add('right');
@@ -665,6 +682,7 @@ function renderQuiz(wid) {
     const score = right / total;
     if (score > (p.quiz[w.id] || 0)) p.quiz[w.id] = score;
     save();
+    track(`${first ? 'steg-klart' : 'steg-igen'}/${w.id}/${right}-av-${total}`, true);
     if (first || score >= 0.8) confetti();
     app.innerHTML = `
       <div class="screen center-screen">
@@ -846,6 +864,7 @@ function renderTrainer(m, g) {
         if (x.dataset.k === '0') x.classList.add('right');
         else if (x === btn) x.classList.add('wrong');
       });
+      track(`trana/${c.id}/${ok ? 'ratt' : 'fel'}`, true);
       const b = p.boxes[c.id] || 0;
       p.boxes[c.id] = ok ? Math.min(5, b + 1) : Math.max(0, b - 1);
       save();
