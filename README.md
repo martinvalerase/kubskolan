@@ -64,6 +64,8 @@ Progress is stored per device in the browser (localStorage). Each person gets th
 | `css/style.css` | Styling |
 | `sw.js` | Offline cache — bump `VERSION` when you deploy changes |
 | `tools/make-icons.ps1` | Regenerates the PNG icons |
+| `tools/handbook/` + `tools/make-handbook.js` | Printable gift handbook (beginner's method, A5, 16 pages) in Swedish and English. Rebuild the PDFs in `handbok/` with `NODE_PATH=$(npm root -g) node tools/make-handbook.js` (needs Node + Playwright). The cube pictures are drawn by `js/cube.js`, so they always match the algorithms |
+| `handbok/` | The finished PDFs, linked from the map screen |
 | `kubskolanplattform/` | Clickable prototype and concept for Kubskolan as a wider platform (served at `/kubskolanplattform/`). Reuses `js/cube.js` and `js/icons.js` |
 
 ## Curriculum

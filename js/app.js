@@ -10,6 +10,7 @@ import { lang, setLang, onLang } from './i18n.js';
 const UI = {
   sv: {
     appName: 'Kubskolan', language: 'Språk',
+    handbook: 'Handbok att skriva ut', handbookSub: 'PDF, 16 sidor. Fin att ge bort med en kub!', handbookFile: 'handbok/kubskolan-handbok.pdf',
     starsOf: n => `${n} av 3 stjärnor`,
     close: 'Stäng', startOver: 'Börja om', moveBack: 'Ett drag bakåt', moveFwd: 'Ett drag framåt',
     play: 'Spela', pause: 'Pausa', slow: 'Långsamt', followLabel: 'Följ med på din kub',
@@ -46,6 +47,7 @@ const UI = {
   },
   en: {
     appName: 'Cube School', language: 'Language',
+    handbook: 'Printable handbook', handbookSub: 'PDF, 16 pages. A lovely gift to go with a cube!', handbookFile: 'handbok/cube-school-handbook.pdf',
     starsOf: n => `${n} of 3 stars`,
     close: 'Close', startOver: 'Start over', moveBack: 'One move back', moveFwd: 'One move forward',
     play: 'Play', pause: 'Pause', slow: 'Slow', followLabel: 'Follow along on your cube',
@@ -601,6 +603,10 @@ function renderMap() {
           }).join('')}
         </ol>
       </div>
+      <a class="handbook-link" href="${T('handbookFile')}" download target="_blank" rel="noopener">
+        <span class="tile-ic">${icon('download')}</span>
+        <span class="adv-txt"><b>${T('handbook')}</b><small>${T('handbookSub')}</small></span>
+      </a>
     </div>`;
 
   app.querySelector('.adventure-btn').onclick = e => {

@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>Handbok</title>
+<link rel="stylesheet" href="fonts/local.css">
+<style>
+@page { size: 148mm 210mm; margin: 0; }
+:root {
+  --ink: #0B2219; --ink-2: #3D5A4C; --ink-3: #7A9486;
+  --mint: #8EE3B1; --mint-deep: #3E9C6F; --mint-soft: #E4F7EC; --lime: #C9E86B; --lime-soft: #F2F8DD;
+  --paper: #FFFFFF; --line: #DCE7DF; --deep: #133427;
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --body: "Lexend", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #888; }
+body { font: 400 9.6pt/1.5 var(--body); color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page:last-child { break-after: auto; }
+.page {
+  width: 148mm; height: 210mm; padding: 13mm 12mm 14mm; background: var(--paper);
+  position: relative; overflow: hidden; break-after: page; display: flex; flex-direction: column;
+}
+@media screen { .page { margin: 8mm auto; box-shadow: 0 2px 12px rgba(0,0,0,.3); } }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.01em; margin: 0; line-height: 1.05; }
+h2 { font-size: 22pt; margin-bottom: 2.5mm; }
+h3 { font-size: 11.5pt; margin: 0 0 1.2mm; }
+p { margin: 0 0 2.4mm; }
+b { font-weight: 600; }
+.eyebrow { font: 600 7.6pt/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 2.5mm; display: flex; align-items: center; gap: 2mm; }
+.eyebrow .num { background: var(--ink); color: var(--lime); border-radius: 99px; padding: 1.2mm 2.6mm; letter-spacing: .08em; }
+.lead { font-size: 10.6pt; color: var(--ink-2); margin-bottom: 4mm; }
+.foot { position: absolute; bottom: 6.5mm; left: 12mm; right: 12mm; display: flex; justify-content: space-between; font-size: 7pt; color: var(--ink-3); }
+
+.row { display: flex; gap: 4mm; align-items: flex-start; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.fig { text-align: center; }
+.fig svg { display: block; margin: 0 auto; }
+.fig figcaption, .cap { font-size: 7.6pt; color: var(--ink-2); margin-top: 1mm; line-height: 1.3; }
+.iso { width: 100%; height: auto; }
+.topview { width: 100%; height: auto; }
+
+.card { border: 0.35mm solid var(--line); border-radius: 4mm; padding: 3.2mm 3.6mm; }
+.card.soft { background: var(--mint-soft); border-color: transparent; }
+.tip { background: var(--lime-soft); border-radius: 4mm; padding: 2.8mm 3.6mm 2.8mm 10mm; position: relative; font-size: 8.8pt; margin-top: auto; }
+.tip::before { content: "★"; position: absolute; left: 3.6mm; top: 2.4mm; font-size: 11pt; color: #8FAE33; }
+.tip + .tip { margin-top: 2.5mm; }
+ol.steps { margin: 0 0 2.4mm; padding-left: 5mm; }
+ol.steps li { margin-bottom: 1.2mm; padding-left: 1mm; }
+
+/* Algoritmer som brickor med pil */
+.alg { display: flex; flex-wrap: wrap; gap: 1.6mm 3mm; margin: 1.5mm 0 1mm; }
+.part { display: flex; flex-direction: column; gap: .8mm; }
+.part-name { font: 600 6.6pt/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.chips { display: flex; flex-wrap: wrap; gap: 1mm; }
+.chip { min-width: 7.4mm; height: 9.2mm; padding: 0 1.2mm; border-radius: 2mm; background: var(--ink); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.chip b { font: 700 9.4pt/1 var(--display); }
+.chip i { font-style: normal; font-size: 7pt; color: var(--lime); margin-top: .6mm; }
+.alg.small .chip { min-width: 6.2mm; height: 7.8mm; }
+.alg.small .chip b { font-size: 8pt; }
+.alg.small .chip i { font-size: 6pt; }
+
+/* Omslag */
+/* Omslag och baksida är vita, så att utskriften inte tar slut på bläcket */
+.cover { padding: 16mm 14mm; }
+.cover .brand { display: flex; align-items: center; gap: 3mm; font: 800 13pt/1 var(--display); color: var(--deep); }
+.cover .brand svg { width: 10mm; height: 10mm; }
+.cover h1 { font-size: 34pt; margin-top: 12mm; color: var(--ink); }
+.cover h1 span { color: var(--mint-deep); }
+.cover .sub { font-size: 11pt; color: var(--ink-2); margin-top: 4mm; max-width: 95mm; }
+.cover .hero { margin: 6mm auto 6mm; width: 62mm; }
+.tag { margin-top: auto; background: #fff; border: .4mm solid var(--line); color: var(--ink); border-radius: 5mm; padding: 5mm 6mm; position: relative; }
+.tag::before { content: ""; position: absolute; top: 4.5mm; right: 6mm; width: 4mm; height: 4mm; border-radius: 50%; border: .6mm solid var(--ink-3); }
+.tag .line { display: flex; align-items: flex-end; gap: 3mm; font: 700 11pt/1 var(--display); margin-top: 4mm; }
+.tag .line:first-child { margin-top: 0; }
+.tag .line span { flex: 1; border-bottom: .35mm solid var(--ink-3); height: 6mm; }
+
+.overview { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.6mm; }
+.overview li { display: grid; grid-template-columns: 7mm 1fr 6mm; align-items: center; gap: 2.5mm; padding: 1.8mm 2.5mm; border-radius: 3mm; background: #F5F8F4; }
+.overview .n { font: 800 11pt/1 var(--display); color: var(--ink-3); text-align: center; }
+.overview small { display: block; color: var(--ink-3); font-size: 7.4pt; line-height: 1.25; }
+.box { width: 5mm; height: 5mm; border: .4mm solid var(--ink-3); border-radius: 1.4mm; }
+
+.moves { display: grid; grid-template-columns: 1fr 1fr; gap: 2.2mm; }
+.move { display: grid; grid-template-columns: 16mm 1fr; gap: 2.5mm; align-items: center; }
+.move .iso { width: 16mm; }
+
+.sheet { display: grid; gap: 1.3mm; }
+.sheet .alg { margin: 0; }
+.sheet .chips { gap: .7mm; }
+.sheet .chip { min-width: 5.3mm; height: 6.6mm; padding: 0 .6mm; border-radius: 1.4mm; }
+.sheet .chip b { font-size: 7pt; }
+.sheet .chip i { font-size: 5.2pt; margin-top: .3mm; }
+.sheet .item { display: grid; grid-template-columns: 24mm 1fr; gap: 2mm; align-items: center; padding-bottom: 1.3mm; border-bottom: .3mm solid var(--line); }
+.sheet .item:last-child { border-bottom: 0; }
+.sheet h3 { font-size: 9.4pt; margin: 0; }
+.sheet small { color: var(--ink-3); font-size: 7pt; display: block; line-height: 1.25; }
+
+.diploma { border: .8mm solid var(--ink); border-radius: 6mm; flex: 1; min-height: 0; padding: 8mm 8mm; text-align: center; display: flex; flex-direction: column; align-items: center; outline: .35mm solid var(--ink); outline-offset: -2.6mm; }
+.diploma h2 { font-size: 28pt; margin-top: 4mm; }
+.diploma .fill { width: 80%; border-bottom: .35mm solid var(--ink-3); height: 9mm; margin-top: 2mm; }
+.diploma small { color: var(--ink-3); font-size: 7.4pt; margin-top: 1mm; }
+.times { width: 100%; border-collapse: collapse; font-size: 8.6pt; }
+.times td, .times th { border-bottom: .3mm solid var(--line); padding: 2.1mm 1.5mm; text-align: left; }
+.times th { font: 600 7pt/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.app { display: grid; grid-template-columns: 30mm 1fr; gap: 5mm; align-items: center; background: var(--mint-soft); border-radius: 5mm; padding: 5mm; margin-top: auto; }
+.app .qr { width: 30mm; height: 30mm; background: #fff; padding: 2mm; border-radius: 2mm; }
+.app .qr svg { width: 100%; height: 100%; display: block; }
+.back { color: var(--ink-2); justify-content: center; align-items: center; text-align: center; }
+.back .brand { font: 800 16pt/1 var(--display); color: var(--deep); display: flex; flex-direction: column; align-items: center; gap: 4mm; }
+.back .brand svg { width: 18mm; height: 18mm; }
+</style>
+</head>
+<body>
+<div id="book"></div>
+<script type="module">
+// Handboken som PDF: kör tools/make-handbook.mjs. ?lang=sv (Kubskolan) eller ?lang=en (Cube School).
+import { setLang } from '../../js/i18n.js';
+import { CubeView, parseAlg, invertAlg, COLORS, MASKS, moveHint } from '../../js/cube.js';
+import { topView } from '../../js/diagram.js';
+
+const LANG = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'sv';
+setLang(LANG); // pilar och dragnamn från kubmotorn på rätt språk
+const x = (sv, en) => (LANG === 'en' ? en : sv);
+const BRAND = x('Kubskolan', 'Cube School');
+document.documentElement.lang = LANG;
+document.title = x('Lös Rubiks kub – Kubskolan', 'Solve the Rubik’s Cube – Cube School');
+
+// ---------- Kubbilder ----------
+
+const GRAY = '#4F5E57';
+const DIRS = { R: [1, 0, 0], L: [-1, 0, 0], U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1], B: [0, 0, -1] };
+const same = (a, b) => a.every((v, k) => v === b[k]);
+const host = document.createElement('div');
+host.style.cssText = 'position:fixed;left:-9999px;top:0;width:10px;height:10px';
+document.body.appendChild(host);
+const view = new CubeView(host);
+
+function sticker(pos, dir, maskFn) {
+  const c = view.cubies.find(q => same(q.pos, pos));
+  for (const [face, d] of Object.entries(DIRS)) {
+    const w = [0, 1, 2].map(k => c.cols[0][k] * d[0] + c.cols[1][k] * d[1] + c.cols[2][k] * d[2]);
+    if (same(w, dir)) return maskFn(c.home, face) ? COLORS[face] : GRAY;
+  }
+}
+
+// Kub i isometrisk vy: toppen, framsidan och högra sidan.
+// hl: bitar efter hemposition (t.ex. 'DFR'), at: platser på kuben (t.ex. 'UFR'). Båda får en vit ram.
+function iso({ setup = '', setupInv, mask = 'full', hl = [], at = [] } = {}) {
+  view.reset();
+  view.applyTokens(setupInv ? invertAlg(parseAlg(setupInv)) : parseAlg(setup));
+  const maskFn = MASKS[mask] || MASKS.full;
+  const s = 20;
+  const P = ([px, py, pz]) => [(px - pz) * 0.866 * s, (px + pz) * 0.5 * s - py * s];
+  const poly = (pts, attrs) => `<polygon points="${pts.map(p => P(p).map(v => v.toFixed(2)).join(',')).join(' ')}" ${attrs}/>`;
+  const add = (a, b, k = 1) => a.map((v, i) => v + b[i] * k);
+  const quad = (c, u, v) => [add(add(c, u), v), add(add(c, u), v, -1), add(add(c, u, -1), v, -1), add(add(c, u, -1), v)];
+  const faces = [
+    { n: [0, 1, 0], u: [1, 0, 0], v: [0, 0, 1], shade: 0, cell: (a, b) => [[a, 1, b], [a, 1.5, b]] },
+    { n: [0, 0, 1], u: [1, 0, 0], v: [0, 1, 0], shade: .10, cell: (a, b) => [[a, b, 1], [a, b, 1.5]] },
+    { n: [1, 0, 0], u: [0, 0, 1], v: [0, 1, 0], shade: .2, cell: (a, b) => [[1, b, a], [1.5, b, a]] },
+  ];
+  const small = (f, c) => quad(c, f.u.map(v => v * .43), f.v.map(v => v * .43));
+  let out = '';
+  for (const f of faces) {
+    out += poly(quad(f.n.map(v => v * 1.5), f.u.map(v => v * 1.56), f.v.map(v => v * 1.56)), 'fill="#121613" stroke="#121613" stroke-width="1.6" stroke-linejoin="round"');
+    for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) {
+      const [pos, c] = f.cell(a, b);
+      out += poly(small(f, c), `fill="${sticker(pos, f.n, maskFn)}"`);
+      if (f.shade) out += poly(small(f, c), `fill="#000" fill-opacity="${f.shade}"`);
+    }
+  }
+  const toPos = name => [...name].reduce((p, ch) => add(p, DIRS[ch]), [0, 0, 0]);
+  const rings = [...hl.map(name => view.cubies.find(q => same(q.home, toPos(name))).pos), ...at.map(toPos)];
+  for (const target of rings) for (const f of faces) for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) {
+    const [pos, c] = f.cell(a, b);
+    if (same(pos, target)) out += poly(small(f, c), 'fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"');
+  }
+  const W = 3 * 0.866 * s + 4, H = 3 * s + 4;
+  return `<svg class="iso" viewBox="${-W} ${-H} ${2 * W} ${2 * H}" xmlns="http://www.w3.org/2000/svg">${out}</svg>`;
+}
+const top = cfg => topView(cfg);
+
+// Algoritm som brickor; parts = [[namn, alg], …]
+function alg(a, { small = false } = {}) {
+  const parts = Array.isArray(a) ? a : [['', a]];
+  return `<div class="alg ${small ? 'small' : ''}">${parts.map(([name, str]) => `<div class="part">
+    ${name ? `<span class="part-name">${name}</span>` : ''}
+    <div class="chips">${parseAlg(str).map(t => `<span class="chip"><b>${t.text}</b><i>${moveHint(t).arrow}</i></span>`).join('')}</div></div>`).join('')}</div>`;
+}
+
+const LOGO = `<svg viewBox="0 0 48 48" aria-hidden="true">
+  <path d="M24 4 41 13.5v21L24 44 7 34.5v-21z" fill="#1B4A37"/><path d="M24 4 41 13.5 24 23 7 13.5z" fill="#C9E86B"/>
+  <path d="M7 13.5 24 23v21L7 34.5z" fill="#8EE3B1"/><path d="M41 13.5 24 23v21l17-9.5z" fill="#5FC4A8"/>
+  <path d="M24 4 41 13.5v21L24 44 7 34.5v-21zM7 13.5 24 23l17-9.5M24 23v21M15.5 8.75l17 9.5M32.5 8.75l-17 9.5M7 24l17 9.5 17-9.5M15.5 18.25v21M32.5 18.25v21" fill="none" stroke="#0B2219" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+
+// ---------- Algoritmerna (samma som i appens nybörjarmetod) ----------
+
+const DANCE = "R U R' U'";
+const DAISY = 'L2 U R2 F2 U B2', DAISY_SIMPLE = 'F2 R2 B2 L2';
+const MID_R = "U R U' R' U' F' U F", MID_L = "U' L' U L U F U' F'";
+const SUNE = "R U R' U R U2 R'", SUNE_U = SUNE + ' U';
+const TPERM = "R U R' U' R' F R2 U' R' U' R U R' F'"; // bara för bilden med kanter mittemot varandra
+const OLL_LINE = "F R U R' U' F'", OLL_L = "F U R U' R' F'";
+const NIKLAS = "U R U' L' U R' U' L";
+const TWIST = "R' D' R D";
+// Samma fall som i appens Träna: ett hörn behöver 2 danser, nästa 4.
+const TWIST_CASE = [TWIST, TWIST, 'U', TWIST, TWIST, TWIST, TWIST, "U'"].join(' ');
+const TWIST_MID = invertAlg(parseAlg(TWIST_CASE)).map(t => t.text).join(' ') + ` ${TWIST} ${TWIST} U`;
+const C_SETUP = "U R U' R' U R U' R' U R U' R' U";
+
+// ---------- Sidorna ----------
+
+let pageNo = 0;
+const page = (html, cls = '', foot = true) => {
+  pageNo++;
+  return `<section class="page ${cls}">${html}${foot ? `<div class="foot"><span>${BRAND} · kubskolan.se</span><span>${pageNo}</span></div>` : ''}</section>`;
+};
+const stepHead = (n, title, lead) => `<div class="eyebrow"><span class="num">${x(`Steg ${n} av 8`, `Step ${n} of 8`)}</span></div><h2>${title}</h2><p class="lead">${lead}</p>`;
+const fig = (pic, cap, extra = '') => `<figure class="fig" style="margin:0">${pic}<figcaption>${cap}</figcaption>${extra}</figure>`;
+const STEPS = [
+  [x('Prästkragen', 'The daisy'), x('Fyra vita kanter runt den gula mitten', 'Four white edges around the yellow centre')],
+  [x('Vita korset', 'The white cross'), x('Ett vitt kors under kuben', 'A white cross underneath the cube')],
+  [x('Vita hörnen', 'The white corners'), x('Första våningen klar', 'The first layer done')],
+  [x('Mittenvåningen', 'The middle layer'), x('Två våningar klara', 'Two layers done')],
+  [x('Gula korset', 'The yellow cross'), x('Ett gult kors på toppen', 'A yellow cross on top')],
+  [x('Gula kanterna', 'The yellow edges'), x('Kanterna matchar sidorna', 'The edges match the sides')],
+  [x('Gula hörnen på plats', 'Yellow corners in place'), x('Varje hörn till sin plats', 'Every corner to its spot')],
+  [x('Vrid hörnen', 'Twist the corners'), x('Kuben är löst!', 'The cube is solved!')],
+];
+
+const pages = [];
+
+// 1. Omslag (vitt, så att det inte går åt en massa bläck)
+pages.push(page(`
+  <div class="brand">${LOGO} ${BRAND}</div>
+  <h1>${x('Lös Rubiks kub.<br><span>Steg för steg.</span>', 'Solve the Rubik’s Cube.<br><span>Step by step.</span>')}</h1>
+  <p class="sub">${x('En liten handbok som följer med din nya kub. Ingen förkunskap behövs, bara lite tålamod.', 'A little handbook to go with your new cube. No experience needed, just a bit of patience.')}</p>
+  <div class="hero">${iso({ mask: 'full' })}</div>
+  <div class="tag">
+    <div class="line">${x('Till', 'To')} <span></span></div>
+    <div class="line">${x('Från', 'From')} <span></span></div>
+  </div>`, 'cover', false));
+
+// 2. Välkommen
+pages.push(page(`
+  <div class="eyebrow">${x('Välkommen', 'Welcome')}</div>
+  <h2>${x('Grattis till din kub!', 'Enjoy your new cube!')}</h2>
+  <p class="lead">${x('Snart kan du lösa den. Hela vägen, helt själv.', 'Soon you’ll be able to solve it. All the way, all by yourself.')}</p>
+  <p>${x('Det ser omöjligt ut, men det är det inte. Den här handboken delar upp kuben i <b>åtta små steg</b>. Varje steg har ett eget mål, och du behöver bara kunna ett steg i taget.',
+    'It looks impossible, but it isn’t. This handbook breaks the cube into <b>eight small steps</b>. Each step has its own goal, and you only need to know one step at a time.')}</p>
+  <p>${x('Ta det i din egen takt. Det är helt okej om ett steg tar en hel kväll. Vrid, titta, prova igen.', 'Go at your own pace. It’s completely fine if one step takes a whole evening. Turn, look, try again.')}</p>
+  <ul class="overview">
+    ${STEPS.map(([t, s], i) => `<li><span class="n">${i + 1}</span><span><b>${t}</b><small>${s}</small></span><span class="box"></span></li>`).join('')}
+  </ul>
+  <div class="tip" style="margin-top:4mm">${x('Bocka av rutan när du klarat ett steg. Det här är <b>nybörjarmetoden</b>: kuben löses våning för våning, med bara åtta korta algoritmer att lära sig.',
+    'Tick the box when you’ve finished a step. This is the <b>beginner’s method</b>: the cube is solved layer by layer, with just eight short algorithms to learn.')}</div>`));
+
+// 3. Lär känna kuben
+pages.push(page(`
+  <div class="eyebrow">${x('Innan du börjar', 'Before you start')}</div>
+  <h2>${x('Lär känna kuben', 'Meet the cube')}</h2>
+  <p class="lead">${x('Kuben består av tre sorters bitar.', 'The cube is made of three kinds of pieces.')}</p>
+  <div class="grid3">
+    ${fig(iso({ mask: 'centers' }), x('<b>Mittbitar</b><br>Sitter fast och flyttar aldrig. De bestämmer sidans färg.', '<b>Centres</b><br>Fixed in place, they never move. They decide each side’s colour.'))}
+    ${fig(iso({ mask: 'edges' }), x('<b>Kanter</b><br>Två färger. Det finns 12 stycken.', '<b>Edges</b><br>Two colours. There are 12 of them.'))}
+    ${fig(iso({ mask: 'corners' }), x('<b>Hörn</b><br>Tre färger. Det finns 8 stycken.', '<b>Corners</b><br>Three colours. There are 8 of them.'))}
+  </div>
+  <div class="card soft" style="margin-top:5mm">
+    <h3>${x('Vilka färger sitter mittemot varandra?', 'Which colours are opposite each other?')}</h3>
+    <p style="margin:0">${x('Gul mittemot vit. Grön mittemot blå. Röd mittemot orange. Kolla din kub! Har den andra färger? Ingen fara, men bilderna här stämmer bäst med en kub i standardfärger.',
+      'Yellow opposite white. Green opposite blue. Red opposite orange. Check your cube! Different colours? No problem, but the pictures here match a cube in the standard colours best.')}</p>
+  </div>
+  <div class="row" style="margin-top:5mm; align-items:center">
+    <div style="width:38mm; flex:none">${iso({ mask: 'full' })}</div>
+    <div>
+      <h3>${x('Håll kuben så här. Hela tiden!', 'Hold the cube like this. Every time!')}</h3>
+      <p>${x('<b>Gul mitt uppåt</b> och <b>grön mitt mot dig</b>. Då ser din kub ut precis som bilderna i boken.', '<b>Yellow centre on top</b> and <b>green centre facing you</b>. Then your cube looks just like the pictures in this book.')}</p>
+      <p style="margin:0">${x('Vi bygger kuben nerifrån och upp: den vita botten först, den gula toppen sist.', 'We build the cube from the bottom up: the white bottom first, the yellow top last.')}</p>
+    </div>
+  </div>
+  <div class="tip">${x('En bit flyttar alltid som en hel bit. Ett hörn blir aldrig en kant, och en mittbit byter aldrig plats.', 'A piece always moves as one whole piece. A corner never turns into an edge, and a centre never changes places.')}</div>`));
+
+// 4. Kubens språk
+const mv = (m, txt) => `<div class="move"><div>${alg(m, { small: true })}</div><div>${txt}</div></div>`;
+pages.push(page(`
+  <div class="eyebrow">${x('Innan du börjar', 'Before you start')}</div>
+  <h2>${x('Kubens språk', 'The cube’s language')}</h2>
+  <p class="lead">${x('Varje vridning har en bokstav. Bokstäverna kommer från engelska.', 'Every turn has a letter.')}</p>
+  <div class="moves">
+    ${mv('R', x('<b>R</b> (Right): högra sidan <b>upp</b>', '<b>R</b> (Right): right side <b>up</b>'))}
+    ${mv("R'", x('<b>R′</b> (säg "R prim"): högra sidan <b>ner</b>', '<b>R′</b> (say “R prime”): right side <b>down</b>'))}
+    ${mv('U', x('<b>U</b> (Up): toppen åt <b>vänster</b>', '<b>U</b> (Up): top to the <b>left</b>'))}
+    ${mv("U'", x('<b>U′</b>: toppen åt <b>höger</b>', '<b>U′</b>: top to the <b>right</b>'))}
+    ${mv('F', x('<b>F</b> (Front): framsidan <b>medurs</b>, som klockan', '<b>F</b> (Front): front <b>clockwise</b>, like a clock'))}
+    ${mv("F'", x('<b>F′</b>: framsidan <b>moturs</b>', '<b>F′</b>: front <b>anticlockwise</b>'))}
+    ${mv('L', x('<b>L</b> (Left): vänstra sidan <b>ner</b>', '<b>L</b> (Left): left side <b>down</b>'))}
+    ${mv("L'", x('<b>L′</b>: vänstra sidan <b>upp</b>', '<b>L′</b>: left side <b>up</b>'))}
+  </div>
+  <p style="margin-top:3mm">${x('En <b>2</b> efter bokstaven betyder: gör det två gånger. <b>F2</b> är samma sak som F F. Pilen under varje bokstav visar hur du vrider när du tittar framifrån.',
+    'A <b>2</b> after the letter means: do it twice. <b>F2</b> is the same as F F. The arrow under each letter shows which way to turn, looking from the front.')}</p>
+  <div class="card soft" style="margin-top:2mm">
+    <h3>${x('Dansen, det viktigaste draget', 'The Dance, the most important move')}</h3>
+    ${alg(DANCE)}
+    <p style="margin:1.5mm 0 0">${x('Höger upp, toppen vänster, höger ner, toppen höger. Öva tills händerna gör det av sig själva. Kul grej: gör Dansen 6 gånger, så är kuben tillbaka där den började!',
+      'Right up, top left, right down, top right. Practise until your hands do it all by themselves. Fun fact: do the Dance 6 times and the cube is back where it started!')}</p>
+  </div>
+  <div class="tip">${x('Lätt att blanda ihop: <b>R</b> och <b>L′</b> vrider båda sin sida <b>upp</b>. <b>R′</b> och <b>L</b> vrider båda sin sida <b>ner</b>.',
+    'Easy to mix up: <b>R</b> and <b>L′</b> both turn their side <b>up</b>. <b>R′</b> and <b>L</b> both turn their side <b>down</b>.')}</div>`));
+
+// 5. Steg 1 Prästkragen
+pages.push(page(`
+  ${stepHead(1, STEPS[0][0], x('Den gula mitten blir en blomma med fyra vita kronblad.', 'The yellow centre becomes a flower with four white petals.'))}
+  <div class="row" style="align-items:center">
+    <div style="width:34mm; flex:none">${iso({ setup: DAISY, mask: 'daisy' })}</div>
+    <div><p>${x('<b>Målet:</b> fyra vita kanter runt den gula mitten, med det vita uppåt.', '<b>The goal:</b> four white edges around the yellow centre, with the white facing up.')}</p>
+      <p style="margin:0">${x('Färgen på kronbladets andra sida spelar ingen roll än.', 'The colour on the other side of each petal doesn’t matter yet.')}</p></div>
+  </div>
+  <h3 style="margin-top:3mm">${x('Hitta en vit kant och vrid upp den', 'Find a white edge and turn it up')}</h3>
+  <div class="grid3">
+    ${fig(iso({ setup: DAISY_SIMPLE + " R'", mask: 'daisy', hl: ['DR'] }), x('<b>I mitten, vitt mot dig</b><br>Vrid upp högra sidan.', '<b>In the middle, white facing you</b><br>Turn the right side up.'), alg('R', { small: true }))}
+    ${fig(iso({ setup: DAISY_SIMPLE + ' F', mask: 'daisy', hl: ['DF'] }), x('<b>I mitten, vitt åt sidan</b><br>Vrid framsidan baklänges.', '<b>In the middle, white to the side</b><br>Turn the front backwards.'), alg("F'", { small: true }))}
+    ${fig(iso({ setup: DAISY_SIMPLE + ' F2', mask: 'daisy', hl: ['DF'] }), x('<b>På botten, vitt nedåt</b><br>Vrid sidan två gånger.', '<b>On the bottom, white facing down</b><br>Turn that side twice.'), alg('F2', { small: true }))}
+  </div>
+  <p style="margin-top:3mm">${x('<b>Kanten sitter på botten men vitt pekar åt sidan?</b> Vrid den sidan en gång, så hamnar kanten i mitten-våningen. Fortsätt sedan som ovan.',
+    '<b>Edge on the bottom, but the white points to the side?</b> Turn that side once, and the edge moves into the middle layer. Then carry on as above.')}</p>
+  <p>${x('<b>En vit kant i toppen, men vitt pekar åt sidan?</b> Vrid ner den med framsidan (F), gör plats och vrid upp den igen.',
+    '<b>A white edge on top, but the white points to the side?</b> Turn it down with the front (F), make room, and turn it back up.')}</p>
+  <div class="tip">${x('<b>Gör plats först!</b> Vrid toppen (U) så att platsen ovanför är tom. Annars knuffar du ner ett kronblad.',
+    '<b>Make room first!</b> Turn the top (U) so the spot above is empty. Otherwise you’ll knock a petal off.')}</div>`));
+
+// 6. Steg 2 Vita korset
+pages.push(page(`
+  ${stepHead(2, STEPS[1][0], x('Kronbladen flyttas ner ett i taget. Då blir det ett vitt kors under kuben.', 'The petals move down one at a time. That makes a white cross underneath the cube.'))}
+  <div class="card soft">
+    <h3>${x('För varje kronblad', 'For each petal')}</h3>
+    <ol class="steps" style="margin:0">
+      <li>${x('Titta på kronbladets <b>andra färg</b>, inte den vita.', 'Look at the petal’s <b>other colour</b>, not the white.')}</li>
+      <li>${x('Vrid toppen tills den färgen står ovanför <b>mitten med samma färg</b>.', 'Turn the top until that colour is above the <b>centre of the same colour</b>.')}</li>
+      <li>${x('Vrid den sidan <b>två gånger</b>. Kronbladet åker ner till botten.', 'Turn that side <b>twice</b>. The petal drops down to the bottom.')}</li>
+    </ol>
+  </div>
+  <div class="grid2" style="margin-top:4mm">
+    ${fig(iso({ setup: DAISY + " B2 U'", mask: 'cross', hl: ['DF'] }), x('Det gröna kronbladet står över den gröna mitten. Vrid framsidan två gånger.', 'The green petal is above the green centre. Turn the front twice.'), alg('F2', { small: true }))}
+    ${fig(iso({ setup: 'x2', mask: 'cross' }), x('Klart! Vänd på kuben: ett vitt kors, och sidorna matchar mittbitarna.', 'Done! Flip the cube over: a white cross, with its sides matching the centres.'))}
+  </div>
+  <p style="margin-top:4mm">${x('Gör likadant med alla fyra kronbladen.', 'Do the same with all four petals.')}</p>
+  <div class="tip">${x('Matcha färgen, vrid två gånger. Blev korset fel? Kolla att varje kronblad stod över rätt mitt innan du vred.',
+    'Match the colour, turn twice. Cross came out wrong? Check that each petal was above the right centre before you turned.')}</div>`));
+
+// 7. Steg 3 Vita hörnen
+pages.push(page(`
+  ${stepHead(3, STEPS[2][0], x('De fyra vita hörnen ska ner mellan korsets armar. Då är första våningen klar.', 'The four white corners go down between the arms of the cross. Then the first layer is done.'))}
+  <div class="row" style="align-items:center">
+    <div style="width:40mm; flex:none">${iso({ setup: C_SETUP + " U'", mask: 'firstLayer', hl: ['DFR'] })}</div>
+    <div>
+      <h3>${x('Hitta rätt plats', 'Find the right spot')}</h3>
+      <p>${x('Hörnets två andra färger visar var det ska bo. Hörnet med vitt, grönt och orange ska ner <b>mellan den gröna och den orange mitten</b>.',
+        'A corner’s two other colours show where it lives. The white, green and orange corner belongs <b>between the green and orange centres</b>.')}</p>
+      <p style="margin:0">${x('Vrid toppen tills hörnet står precis ovanför sin plats. Håll kuben så att hörnet är <b>uppe till höger, framme</b>.',
+        'Turn the top until the corner is right above its spot. Hold the cube so the corner is <b>top right, at the front</b>.')}</p>
+    </div>
+  </div>
+  <div class="card soft" style="margin-top:4mm">
+    <h3>${x('Dansa tills det sitter!', 'Dance until it’s in!')}</h3>
+    ${alg(DANCE)}
+    <p style="margin:1.5mm 0 0">${x('Gör Dansen igen och igen tills hörnet sitter rätt med vitt nedåt. Räkna! Ibland räcker en gång, ibland behövs tre eller fem.',
+      'Do the Dance again and again until the corner is in place with white facing down. Count! Sometimes once is enough, sometimes it takes three or five.')}</p>
+  </div>
+  <p style="margin-top:4mm">${x('<b>Sitter ett vitt hörn i botten men vridet fel?</b> Håll det nere till höger, framme, och dansa en gång. Då hoppar det upp i toppen, och du kan börja om med det.',
+    '<b>A white corner in the bottom, but twisted the wrong way?</b> Hold it bottom right, at the front, and dance once. It jumps up to the top, and you can start over with it.')}</p>
+  <div class="tip">${x('Klart när varje sida har ett litet <b>T</b> av samma färg längst ner.', 'Done when every side has a little <b>T</b> of one colour at the bottom.')}</div>`));
+
+// 8. Steg 4 Mittenvåningen
+pages.push(page(`
+  ${stepHead(4, STEPS[3][0], x('Fyra kanter sätts in i mitten. Sedan är två våningar klara.', 'Four edges go into the middle. Then two layers are done.'))}
+  <div class="row" style="align-items:center">
+    <div style="width:38mm; flex:none">${iso({ setupInv: MID_R, mask: 'f2l', hl: ['FR'] })}</div>
+    <div>
+      <h3>${x('Gör ett upp-och-ner-T', 'Make an upside-down T')}</h3>
+      <p>${x('Hitta en kant i toppen <b>utan gult</b>. Vrid toppen tills kantens framfärg står ovanför mitten med samma färg.',
+        'Find an edge on top <b>without yellow</b>. Turn the top until the edge’s front colour is above the centre of the same colour.')}</p>
+      <p style="margin:0">${x('Kantens <b>toppfärg</b> visar vart den ska. Här är den orange, så den ska till höger, där den orange mitten är.',
+        'The edge’s <b>top colour</b> shows where it goes. Here it’s orange, so it goes to the right, where the orange centre is.')}</p>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:3.5mm">
+    <div class="card"><h3>${x('Till höger', 'To the right')}</h3>${alg([[x('Bort-dansen', 'Away dance'), "U R U' R'"], [x('Fram-dansen', 'Front dance'), "U' F' U F"]], { small: true })}</div>
+    <div class="card"><h3>${x('Till vänster', 'To the left')}</h3>${alg([[x('Bort-dansen', 'Away dance'), "U' L' U L"], [x('Fram-dansen', 'Front dance'), "U F U' F'"]], { small: true })}</div>
+  </div>
+  <p style="margin-top:3.5mm">${x('Båda börjar med att toppen vrids <b>bort</b> från där kanten ska. Vänster är samma sak som höger, fast spegelvänt.',
+    'Both start by turning the top <b>away</b> from where the edge is going. Left is the same as right, just mirrored.')}</p>
+  <p>${x('<b>Sitter en kant i mitten men vänd fel?</b> Håll den fram till höger och gör "Till höger" en gång. Då hoppar den upp i toppen, och du kan sätta in den på rätt sätt.',
+    '<b>An edge in the middle, but flipped the wrong way?</b> Hold it front right and do “To the right” once. It jumps up to the top, and you can put it in the right way.')}</p>
+  <div class="tip">${x('Har alla kanter i toppen gult? Då sitter någon kant fel i mitten. Knuffa upp den med "Till höger".',
+    'Do all the edges on top have yellow? Then an edge is wrong in the middle. Knock it out with “To the right”.')}</div>`));
+
+// 9. Steg 5 Gula korset
+pages.push(page(`
+  ${stepHead(5, STEPS[4][0], x('Nu blir toppen gul. Först kanterna: ett gult plustecken.', 'Now the top turns yellow. Edges first: a yellow plus sign.'))}
+  <p>${x('Titta bara på plustecknet i mitten, inte på hörnen. Toppen ser ut som en av de här bilderna, sedd <b>ovanifrån</b>:',
+    'Only look at the plus sign in the middle, not the corners. Your top looks like one of these pictures, seen <b>from above</b>:')}</p>
+  <div class="grid3">
+    ${fig(top({ setupInv: OLL_LINE + ' U2 ' + OLL_L, mask: 'ollCross' }), `<b>${x('Prick', 'Dot')}</b>`)}
+    ${fig(top({ setupInv: OLL_L, mask: 'ollCross' }), '<b>L</b>')}
+    ${fig(top({ setupInv: OLL_LINE, mask: 'ollCross' }), `<b>${x('Linje', 'Line')}</b>`)}
+  </div>
+  <div class="card" style="margin-top:3.5mm">
+    <h3>${x('Linje: håll den vågrätt, från vänster till höger', 'Line: hold it sideways, from left to right')}</h3>
+    ${alg([[x('Fram', 'Front'), 'F'], [x('Dansen', 'The Dance'), DANCE], [x('Fram tillbaka', 'Front back'), "F'"]], { small: true })}
+  </div>
+  <div class="card" style="margin-top:2.5mm">
+    <h3>${x('L: ena armen bakåt, andra åt vänster', 'L: one arm to the back, the other to the left')}</h3>
+    ${alg([[x('Fram', 'Front'), 'F'], [x('Baklänges-dansen', 'Backwards dance'), "U R U' R'"], [x('Fram tillbaka', 'Front back'), "F'"]], { small: true })}
+  </div>
+  <p style="margin-top:3mm">${x('<b>Prick?</b> Gör Linje-algoritmen. Då får du ett L. Vrid toppen så att L:et ligger som på bilden och gör L-algoritmen.',
+    '<b>Dot?</b> Do the Line algorithm. Now you have an L. Turn the top so the L sits like in the picture, and do the L algorithm.')}</p>
+  <div class="tip">${x('Bilderna visar toppen sedd uppifrån. Den nedre kanten på bilden är sidan som är mot dig.', 'The pictures show the top seen from above. The bottom edge of each picture is the side facing you.')}</div>`));
+
+// 10. Steg 6 Gula kanterna
+pages.push(page(`
+  ${stepHead(6, STEPS[5][0], x('Korset är gult. Nu ska kanterna också matcha mittbitarna på sidorna.', 'The cross is yellow. Now the edges need to match the centres on the sides too.'))}
+  <p>${x('Vrid toppen tills så många kanter som möjligt har samma färg som mitten under sig. Minst två kommer att matcha.',
+    'Turn the top until as many edges as possible match the centre below them. At least two will match.')}</p>
+  <div class="grid2">
+    ${fig(`<div style="width:32mm;margin:0 auto">${top({ setupInv: SUNE_U, mask: 'llEdges' })}</div>`, x('<b>Två bredvid varandra matchar</b><br>Här: bak och höger.', '<b>Two side by side match</b><br>Here: back and right.'))}
+    ${fig(`<div style="width:32mm;margin:0 auto">${top({ setupInv: TPERM, mask: 'llEdges' })}</div>`, x('<b>Två mittemot varandra matchar</b><br>Här: bak och fram.', '<b>Two opposite each other match</b><br>Here: back and front.'))}
+  </div>
+  <div class="card soft" style="margin-top:3.5mm">
+    <h3>${x('Bredvid varandra: håll dem bakåt och till höger', 'Side by side: hold them at the back and right')}</h3>
+    <p style="margin:0 0 1mm">${x('Gör Sune och vrid toppen ett steg till. Nu matchar alla fyra!', 'Do Sune, then turn the top one more step. Now all four match!')}</p>
+    ${alg([[x('Första halvan', 'First half'), "R U R'"], [x('Andra halvan', 'Second half'), "U R U2 R'"], [x('Toppen', 'Top'), 'U']], { small: true })}
+  </div>
+  <p style="margin-top:3.5mm">${x('<b>Mittemot varandra?</b> Gör samma algoritm en gång, från vilken sida som helst. Vrid sedan toppen tills två kanter bredvid varandra matchar, och gör som ovan.',
+    '<b>Opposite each other?</b> Do the same algorithm once, from any side. Then turn the top until two edges side by side match, and do as above.')}</p>
+  <div class="tip">${x('Hörnen i toppen blir lite röriga av Sune. Ingen fara, dem fixar vi i de två sista stegen.', 'Sune mixes up the top corners a bit. Don’t worry, we fix those in the last two steps.')}</div>`));
+
+// 11. Steg 7 Gula hörnen på plats
+pages.push(page(`
+  ${stepHead(7, STEPS[6][0], x('Nu ska varje hörn flytta till sin plats. Vridna fel får de vara, det fixar vi sist.', 'Now every corner moves to its own spot. They can be twisted the wrong way, we fix that last.'))}
+  <div class="row" style="align-items:center">
+    <div style="width:34mm; flex:none">${top({ setupInv: NIKLAS, mask: 'full', arrows: true })}</div>
+    <div>
+      <h3>${x('Sitter hörnet på rätt plats?', 'Is the corner in the right spot?')}</h3>
+      <p style="margin:0">${x('Ett hörn sitter rätt när dess tre färger är samma som de tre mittbitarna runt det, <b>även om det är vridet</b>. Här sitter hörnet fram till höger rätt. Pilarna visar hur de andra tre flyttar.',
+        'A corner is in the right spot when its three colours match the three centres around it, <b>even if it’s twisted</b>. Here the front-right corner is in the right spot. The arrows show how the other three move.')}</p>
+    </div>
+  </div>
+  <div class="card soft" style="margin-top:3.5mm">
+    <h3>${x('Håll det rätta hörnet uppe till höger, framme', 'Hold the correct corner top right, at the front')}</h3>
+    ${alg([[x('Första halvan', 'First half'), "U R U' L'"], [x('Andra halvan', 'Second half'), "U R' U' L"]], { small: true })}
+    <p style="margin:1.5mm 0 0">${x('Titta igen. Sitter alla fyra rätt? Annars gör du algoritmen en gång till, med samma hörn kvar fram till höger.',
+      'Look again. Are all four in the right spot? If not, do the algorithm once more, with the same corner still at the front right.')}</p>
+  </div>
+  <p style="margin-top:3.5mm">${x('<b>Sitter inget hörn rätt?</b> Gör algoritmen en gång var som helst. Då hamnar ett hörn rätt, och du fortsätter som ovan.',
+    '<b>No corner in the right spot?</b> Do the algorithm once from anywhere. Then one corner lands in the right spot, and you carry on as above.')}</p>
+  <div class="tip">${x('Det rätta hörnet står still. De andra tre går runt, ett steg varje gång.', 'The correct corner stays put. The other three go round, one step each time.')}</div>`));
+
+// 12. Steg 8 Vrid hörnen
+pages.push(page(`
+  ${stepHead(8, STEPS[7][0], x('Sista steget! Hörnen sitter på rätt plats, nu ska det gula peka uppåt.', 'The last step! The corners are in the right spots, now the yellow needs to point up.'))}
+  <div class="grid2">
+    ${fig(`<div style="width:34mm;margin:0 auto">${iso({ setupInv: TWIST_CASE, mask: 'full', hl: ['UFR'] })}</div>`, x('<b>Början.</b> Gult åt höger: dansa <b>2 gånger</b>.', '<b>The start.</b> Yellow to the right: dance <b>2 times</b>.'))}
+    ${fig(`<div style="width:34mm;margin:0 auto">${iso({ setup: TWIST_MID, mask: 'full', at: ['UFR'] })}</div>`, x('<b>Sedan U.</b> Nästa hörn har gult framåt: dansa <b>4 gånger</b>. Botten ser rörig ut, det är normalt.', '<b>Then U.</b> The next corner has yellow to the front: dance <b>4 times</b>. The bottom looks messy, that’s normal.'))}
+  </div>
+  <div class="card soft" style="margin-top:3mm">
+    <h3>${x('Håll ett hörn som inte är klart uppe till höger, framme', 'Hold an unfinished corner top right, at the front')}</h3>
+    ${alg(TWIST, { small: true })}
+    <p style="margin:1.5mm 0 0">${x('Höger ner, botten, höger upp, botten tillbaka. Gör den om och om igen tills det gula pekar uppåt.', 'Right down, bottom, right up, bottom back. Do it again and again until the yellow points up.')}</p>
+  </div>
+  <ol class="steps" style="margin-top:3mm">
+    <li>${x('Vrid sedan <b>bara toppen</b> så att nästa hörn som inte är klart kommer fram till höger.', 'Then turn <b>only the top</b> so the next unfinished corner comes to the front right.')}</li>
+    <li>${x('Dansa tills det gula pekar uppåt. Upprepa med alla hörn.', 'Dance until the yellow points up. Repeat for every corner.')}</li>
+    <li>${x('Vrid toppen på plats. Klart!', 'Turn the top into place. Done!')}</li>
+  </ol>
+  <div class="tip">${x('<b>Vänd inte på kuben!</b> Mitt i steget ser resten av kuben rörig ut. Det är helt normalt. Den blir hel igen när sista hörnet är klart.',
+    '<b>Don’t turn the cube around!</b> Halfway through, the rest of the cube looks messy. That’s completely normal. It all comes back together when the last corner is done.')}</div>
+  <div class="card" style="margin-top:2.5mm; text-align:center"><h3 style="font-size:13pt">${x('Grattis, kuben är löst!', 'Well done, the cube is solved!')}</h3>
+    <p style="margin:0">${x('Blanda och gör om. Varje gång går det lite fortare.', 'Mix it up and do it again. It gets a little faster every time.')}</p></div>`));
+
+// 13. Fusklapp
+const sh = (title, sub, a) => `<div class="item"><div><h3>${title}</h3><small>${sub}</small></div>${alg(a, { small: true })}</div>`;
+const st = n => x(`Steg ${n}`, `Step ${n}`);
+pages.push(page(`
+  <div class="eyebrow">${x('Fusklapp', 'Cheat sheet')}</div>
+  <h2>${x('Alla algoritmer', 'Every algorithm')}</h2>
+  <p class="lead" style="margin-bottom:3mm">${x('Bara åtta stycken. Vik hit när du behöver.', 'Just eight of them. Flip back here whenever you need.')}</p>
+  <div class="sheet">
+    ${sh(x('Dansen', 'The Dance'), `${st(3)}: ${x('vita hörnen', 'white corners')}`, DANCE)}
+    ${sh(x('Till höger', 'To the right'), `${st(4)}: ${x('mittenvåningen', 'middle layer')}`, MID_R)}
+    ${sh(x('Till vänster', 'To the left'), `${st(4)}: ${x('mittenvåningen', 'middle layer')}`, MID_L)}
+    ${sh(x('Linje', 'Line'), `${st(5)}: ${x('gula korset', 'yellow cross')}`, OLL_LINE)}
+    ${sh('L', `${st(5)}: ${x('gula korset', 'yellow cross')}`, OLL_L)}
+    ${sh('Sune + U', `${st(6)}: ${x('matchande kanter bak och höger', 'matching edges back and right')}`, SUNE_U)}
+    ${sh(x('Gula hörnen', 'Yellow corners'), `${st(7)}: ${x('rätt hörn fram till höger', 'correct corner front right')}`, NIKLAS)}
+    ${sh(x('Vrid hörnet', 'Twist the corner'), `${st(8)}: ${x('2 eller 4 gånger, vänd inte kuben', '2 or 4 times, don’t turn the cube')}`, TWIST)}
+  </div>
+  <div class="tip">${x('Alla algoritmer görs med <b>gul mitt uppåt</b> och <b>grön mitt mot dig</b>, om inget annat står.', 'Every algorithm is done with the <b>yellow centre on top</b> and the <b>green centre facing you</b>, unless it says otherwise.')}</div>`));
+
+// 14. Diplom
+pages.push(page(`
+  <div class="diploma">
+    <div style="width:22mm">${LOGO}</div>
+    <div class="eyebrow" style="margin:6mm 0 0">${x('Diplom', 'Certificate')}</div>
+    <h2>${x('Jag löste kuben!', 'I solved the cube!')}</h2>
+    <p class="lead" style="margin:0">${x('Helt själv, från blandad till klar.', 'All by myself, from mixed up to solved.')}</p>
+    <div style="width:36mm; margin:5mm 0 0">${iso({ mask: 'full' })}</div>
+    <div class="fill"></div><small>${x('Namn', 'Name')}</small>
+    <div class="fill"></div><small>${x('Datum', 'Date')}</small>
+    <div class="fill"></div><small>${x('Min första tid', 'My first time')}</small>
+  </div>`, '', false));
+
+// 15. Mina tider + appen
+const qr = (await (await fetch('qr.svg')).text()).replace(/width="(\d+)" height="(\d+)"/, 'viewBox="0 0 $1 $2" shape-rendering="crispEdges"');
+const D = x('Datum', 'Date'), T = x('Tid', 'Time');
+pages.push(page(`
+  <div class="eyebrow">${x('Bli snabbare', 'Get faster')}</div>
+  <h2>${x('Mina tider', 'My times')}</h2>
+  <p class="lead">${x('Skriv upp dina tider och se hur du blir snabbare.', 'Write down your times and watch yourself get faster.')}</p>
+  <table class="times"><tr><th>${D}</th><th>${T}</th><th>${D}</th><th>${T}</th></tr>
+    ${Array.from({ length: 10 }, () => '<tr><td></td><td></td><td></td><td></td></tr>').join('')}</table>
+  <div class="app">
+    <div class="qr">${qr}</div>
+    <div>
+      <h3>${x('Fortsätt i Kubskolan', 'Keep going in Cube School')}</h3>
+      <p style="margin:0">${x('Se varje steg på en kub som snurrar, följ med drag för drag på din egen kub, öva algoritmerna och ta tid. Gratis, på mobil och surfplatta.',
+        'Watch every step on a spinning cube, follow along move by move on your own cube, practise the algorithms and time yourself. Free, on phone and tablet.')}</p>
+      <p style="margin:2mm 0 0; font:700 11pt var(--display)">kubskolan.se</p>
+    </div>
+  </div>`));
+
+// 16. Baksida
+pages.push(page(`
+  <div class="brand">${LOGO}<span>${BRAND}</span></div>
+  <p style="margin-top:5mm; max-width:90mm">${x('Lär dig lösa Rubiks kub, ett litet steg i taget. För alla, unga som gamla.', 'Learn to solve the Rubik’s Cube, one small step at a time. For everyone, young and old.')}</p>
+  <p style="margin-top:2mm; color:var(--mint-deep); font-weight:600">kubskolan.se</p>`, 'back', false));
+
+document.getElementById('book').innerHTML = pages.join('');
+await document.fonts.ready;
+document.body.dataset.ready = '1';
+</script>
+</body>
+</html>
