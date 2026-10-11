@@ -1,6 +1,8 @@
 // Kubmotor: kubens modell + 3D-vy byggd med CSS-transformer (inga beroenden).
 // Koordinater: x åt höger, y uppåt, z mot betraktaren. Gul upp, grön fram.
 
+import { lang } from './i18n.js';
+
 export const COLORS = {
   U: '#FFD500', D: '#FFFFFF', F: '#00A651', B: '#1565D8', R: '#FF7A00', L: '#E3172B',
 };
@@ -31,11 +33,17 @@ const ARROWS = {
   r: '↑', l: '↓', u: '←', d: '→', f: '↻', b: '↺', x: '↑', y: '←', z: '↻',
 };
 const FLIP = { '↑': '↓', '↓': '↑', '←': '→', '→': '←', '↻': '↺', '↺': '↻' };
-const NAMES = {
+const NAMES_SV = {
   R: 'Höger', L: 'Vänster', M: 'Mitten', U: 'Toppen', D: 'Botten', E: 'Mittenvåning',
   F: 'Framsidan', B: 'Baksidan', S: 'Mittskiva',
   r: 'Höger + mitten', l: 'Vänster + mitten', u: 'Toppen + mitten', d: 'Botten + mitten',
   f: 'Fram + mitten', b: 'Bak + mitten', x: 'Vänd hela kuben', y: 'Vrid hela kuben', z: 'Tippa hela kuben',
+};
+const NAMES_EN = {
+  R: 'Right', L: 'Left', M: 'Middle', U: 'Top', D: 'Bottom', E: 'Middle layer',
+  F: 'Front', B: 'Back', S: 'Middle slice',
+  r: 'Right + middle', l: 'Left + middle', u: 'Top + middle', d: 'Bottom + middle',
+  f: 'Front + middle', b: 'Back + middle', x: 'Flip the whole cube', y: 'Turn the whole cube', z: 'Tilt the whole cube',
 };
 
 // ---------- Algoritmer ----------
@@ -71,11 +79,11 @@ export function algToString(tokens) {
 export function moveHint(t) {
   let arrow = ARROWS[t.base];
   if (t.amount === -1) arrow = FLIP[arrow];
-  return { arrow: t.amount === 2 ? arrow + arrow : arrow, name: NAMES[t.base] + (t.amount === 2 ? ' två gånger' : '') };
+  return { arrow: t.amount === 2 ? arrow + arrow : arrow, name: (lang === 'en' ? NAMES_EN : NAMES_SV)[t.base] + (t.amount === 2 ? (lang === 'en' ? ' twice' : ' två gånger') : '') };
 }
 
 // Instruktion i klartext för "Följ med"-läget, t.ex. "Vrid HÖGER sida UPP".
-const INSTR = {
+const INSTR_SV = {
   R: ['HÖGER sida', 'UPP', 'NER'], L: ['VÄNSTER sida', 'NER', 'UPP'],
   U: ['TOPPEN', 'åt VÄNSTER', 'åt HÖGER'], D: ['BOTTEN', 'åt HÖGER', 'åt VÄNSTER'],
   F: ['FRAMSIDAN', 'medurs, som klockan', 'moturs, baklänges mot klockan'],
@@ -86,9 +94,22 @@ const INSTR = {
   f: ['FRAMSIDAN och mitten', 'medurs, som klockan', 'moturs'], b: ['BAKSIDAN och mitten', 'medurs sett bakifrån', 'moturs sett bakifrån'],
   x: ['HELA kuben', 'framåt och upp', 'bakåt och ner'], y: ['HELA kuben', 'åt VÄNSTER', 'åt HÖGER'], z: ['HELA kuben', 'medurs', 'moturs'],
 };
+const INSTR_EN = {
+  R: ['the RIGHT side', 'UP', 'DOWN'], L: ['the LEFT side', 'DOWN', 'UP'],
+  U: ['the TOP', 'to the LEFT', 'to the RIGHT'], D: ['the BOTTOM', 'to the RIGHT', 'to the LEFT'],
+  F: ['the FRONT', 'clockwise, like a clock', 'anticlockwise, backwards against the clock'],
+  B: ['the BACK', 'clockwise as seen from behind', 'anticlockwise as seen from behind'],
+  M: ['the MIDDLE', 'DOWN', 'UP'], E: ['the MIDDLE LAYER', 'to the RIGHT', 'to the LEFT'], S: ['the MIDDLE SLICE', 'clockwise', 'anticlockwise'],
+  r: ['the RIGHT side and middle', 'UP', 'DOWN'], l: ['the LEFT side and middle', 'DOWN', 'UP'],
+  u: ['the TOP and middle', 'to the LEFT', 'to the RIGHT'], d: ['the BOTTOM and middle', 'to the RIGHT', 'to the LEFT'],
+  f: ['the FRONT and middle', 'clockwise, like a clock', 'anticlockwise'], b: ['the BACK and middle', 'clockwise as seen from behind', 'anticlockwise as seen from behind'],
+  x: ['the WHOLE cube', 'forwards and up', 'backwards and down'], y: ['the WHOLE cube', 'to the LEFT', 'to the RIGHT'], z: ['the WHOLE cube', 'clockwise', 'anticlockwise'],
+};
 export function moveInstruction(t) {
-  const [what, cw, ccw] = INSTR[t.base];
-  return t.amount === 2 ? `Vrid ${what} två gånger` : `Vrid ${what} ${t.amount === 1 ? cw : ccw}`;
+  const en = lang === 'en';
+  const [what, cw, ccw] = (en ? INSTR_EN : INSTR_SV)[t.base];
+  if (t.amount === 2) return en ? `Turn ${what} twice` : `Vrid ${what} två gånger`;
+  return `${en ? 'Turn' : 'Vrid'} ${what} ${t.amount === 1 ? cw : ccw}`;
 }
 
 // "DFR" -> [1,-1,1]: en bits hemposition skriven med sidbokstäver

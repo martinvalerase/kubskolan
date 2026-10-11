@@ -2,6 +2,97 @@ import { CubeView, parseAlg, invertAlg, moveHint, moveInstruction } from './cube
 import { topView } from './diagram.js';
 import { WORLDS, ALL_CASES, caseById, TRAIN_METHODS } from './content.js';
 import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES, AV_FIGURES } from './icons.js';
+import { lang, setLang, onLang } from './i18n.js';
+
+// ---------- Texter ----------
+
+// Alla texter i gränssnittet, på svenska och engelska. Lektionsinnehållet ligger i content.js och content.en.js.
+const UI = {
+  sv: {
+    appName: 'Kubskolan', language: 'Språk',
+    starsOf: n => `${n} av 3 stjärnor`,
+    close: 'Stäng', startOver: 'Börja om', moveBack: 'Ett drag bakåt', moveFwd: 'Ett drag framåt',
+    play: 'Spela', pause: 'Pausa', slow: 'Långsamt', followLabel: 'Följ med på din kub',
+    follow: 'Följ med', stopFollow: 'Sluta följa', resetCube: 'Nollställ',
+    moveOf: (i, n) => `drag ${i} av ${n}`, doneNext: 'Gjort! Nästa', followDone: 'Klart! Ser din kub ut som den här?',
+    whoToday: 'Vem ska kuba idag?', stepsOf: (d, n) => `${d} av ${n} steg`, newCuber: 'Ny kubare',
+    pickPhoto: 'Välj bild', removePhoto: 'Ta bort bild', yourName: 'Vad heter du?',
+    figure: 'Figur', shape: 'Form', colour: 'Färg', shapeN: i => `Form ${i}`, colourN: i => `Färg ${i}`,
+    figures: ['Bokstav', 'Katt', 'Häst', 'Snubbe', 'Sol'],
+    cancel: 'Avbryt', done: 'Klar', defaultName: 'Kubare',
+    unlockAll: 'Lås upp alla steg', enterCode: 'Skriv koden.', wrongCode: 'Fel kod. Försök igen.', unlock: 'Lås upp',
+    switchCuber: 'Byt kubare', hi: name => `Hej ${name}!`, allDone: 'Du har klarat alla steg.',
+    stepsDone: (d, n) => `${d} av ${n} steg klara`, overview: 'Översikt',
+    train: 'Träna', algorithms: 'Algoritmer', timer: 'Tidtagning', howFast: 'Hur snabb är du?', adventure: 'Äventyret',
+    start: 'Start', step: i => `Steg ${i}`, quiz: 'Frågor', back: 'Bak', towardYou: 'Mot dig',
+    remember: 'Kommer du ihåg?', readAloud: 'Läs upp', stuck: 'Fastnade du?', iDidIt: 'Jag klarade det!',
+    prev: 'Tillbaka', next: 'Nästa', pickMatch: 'Välj det som stämmer, så hoppar du till rätt ställe.',
+    quickQuiz: 'Snabbfrågor', right: 'Rätt!', almost: ans => `Nästan! Rätt svar: <b>${ans}</b>`,
+    stepDone: 'Steget klart!', rightOf: (r, n) => `${r} av ${n} rätt`, gotStar: 'Superbra! Du fick en stjärna.',
+    allForStar: n => `Svara rätt på alla ${n} för att få en stjärna.`,
+    practiceForStars: 'Öva algoritmerna under Träna för att få alla stjärnor.',
+    again: 'Igen', toMap: 'Till kartan', allIn: title => `Alla i ${title}`, level: b => `Nivå ${b} av 5`,
+    algs: n => `${n} ${n === 1 ? 'algoritm' : 'algoritmer'}`, known: n => `${n} sitter`,
+    whichMethod: 'Vilken metod vill du öva på?', lastTime: 'Senast', whatPractice: 'Vad vill du öva på?',
+    mixedAll: 'Blandat från alla steg', showOnCube: 'Visa på kuben', practiseThese: 'Öva på de här',
+    whatHere: 'Vad gör du här?', whichSolves: 'Vilken algoritm löser det?',
+    tapPlay: 'Tryck på spela för att se lösningen på kuben.', almostGreen: 'Nästan! Det gröna är rätt.',
+    timerHelp: 'Håll fingret här tills det blir grönt. Släpp för att starta. Tryck för att stoppa.',
+    best: 'Bästa', avg5: 'Snitt av 5', solves: 'Lösningar', removeLast: 'Ta bort senaste',
+    mastered: 'Algoritmer som sitter', bestTime: 'Bästa tid', week: 'Lösningar, 7 dagar', quizPct: n => `Frågor ${n} %`,
+    resetProgress: 'Nollställ framsteg', deleteProfile: 'Ta bort profil', deviceOnly: 'Sparas bara i den här enheten/webbläsaren.',
+    resetQ: name => `Nollställa ${name}?`, resetWarn: 'Alla stjärnor och tider försvinner.', resetBtn: 'Nollställ',
+    deleteQ: name => `Ta bort ${name}?`, deleteWarn: 'Profilen och alla framsteg försvinner.', deleteBtn: 'Ta bort',
+  },
+  en: {
+    appName: 'Cube School', language: 'Language',
+    starsOf: n => `${n} of 3 stars`,
+    close: 'Close', startOver: 'Start over', moveBack: 'One move back', moveFwd: 'One move forward',
+    play: 'Play', pause: 'Pause', slow: 'Slow', followLabel: 'Follow along on your cube',
+    follow: 'Follow along', stopFollow: 'Stop following', resetCube: 'Reset',
+    moveOf: (i, n) => `move ${i} of ${n}`, doneNext: 'Done! Next', followDone: 'All done! Does your cube look like this one?',
+    whoToday: 'Who’s cubing today?', stepsOf: (d, n) => `${d} of ${n} steps`, newCuber: 'New cuber',
+    pickPhoto: 'Choose a photo', removePhoto: 'Remove photo', yourName: 'What’s your name?',
+    figure: 'Figure', shape: 'Shape', colour: 'Colour', shapeN: i => `Shape ${i}`, colourN: i => `Colour ${i}`,
+    figures: ['Letter', 'Cat', 'Horse', 'Dude', 'Sun'],
+    cancel: 'Cancel', done: 'Done', defaultName: 'Cuber',
+    unlockAll: 'Unlock all steps', enterCode: 'Enter the code.', wrongCode: 'That’s not the code. Try again.', unlock: 'Unlock',
+    switchCuber: 'Switch cuber', hi: name => `Hi ${name}!`, allDone: 'You’ve finished every step.',
+    stepsDone: (d, n) => `${d} of ${n} steps done`, overview: 'Overview',
+    train: 'Practice', algorithms: 'Algorithms', timer: 'Timer', howFast: 'How fast are you?', adventure: 'The Adventure',
+    start: 'Start', step: i => `Step ${i}`, quiz: 'Quiz', back: 'Back', towardYou: 'Facing you',
+    remember: 'Remember this?', readAloud: 'Read aloud', stuck: 'Stuck?', iDidIt: 'I did it!',
+    prev: 'Back', next: 'Next', pickMatch: 'Pick the one that fits, and we’ll jump to the right place.',
+    quickQuiz: 'Quick quiz', right: 'Correct!', almost: ans => `So close! The right answer is <b>${ans}</b>`,
+    stepDone: 'Step complete!', rightOf: (r, n) => `${r} of ${n} right`, gotStar: 'Brilliant! You earned a star.',
+    allForStar: n => `Get all ${n} right to earn a star.`,
+    practiceForStars: 'Practise the algorithms under Practice to earn every star.',
+    again: 'Try again', toMap: 'Back to the map', allIn: title => `All of ${title}`, level: b => `Level ${b} of 5`,
+    algs: n => `${n} ${n === 1 ? 'algorithm' : 'algorithms'}`, known: n => `${n} learned`,
+    whichMethod: 'Which method do you want to practise?', lastTime: 'Last time', whatPractice: 'What do you want to practise?',
+    mixedAll: 'A mix from every step', showOnCube: 'Show on the cube', practiseThese: 'Practise these',
+    whatHere: 'What do you do here?', whichSolves: 'Which algorithm solves it?',
+    tapPlay: 'Tap play to see the solution on the cube.', almostGreen: 'So close! The green one is right.',
+    timerHelp: 'Hold your finger here until it turns green. Let go to start. Tap to stop.',
+    best: 'Best', avg5: 'Average of 5', solves: 'Solves', removeLast: 'Remove the last one',
+    mastered: 'Algorithms learned', bestTime: 'Best time', week: 'Solves, last 7 days', quizPct: n => `Quiz ${n}%`,
+    resetProgress: 'Reset progress', deleteProfile: 'Delete profile', deviceOnly: 'Only saved on this device and browser.',
+    resetQ: name => `Reset ${name}?`, resetWarn: 'All stars and times will be gone.', resetBtn: 'Reset',
+    deleteQ: name => `Delete ${name}?`, deleteWarn: 'The profile and all its progress will be gone.', deleteBtn: 'Delete',
+  },
+};
+const T = (k, ...a) => {
+  const v = UI[lang][k] ?? UI.sv[k];
+  return typeof v === 'function' ? v(...a) : v;
+};
+
+// Språkväljaren i sidhuvudet
+const langSwitch = () => `<div class="lang-switch" role="group" aria-label="${T('language')}">${['sv', 'en'].map(l =>
+  `<button data-lang="${l}" aria-pressed="${l === lang}" lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`;
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-lang]');
+  if (b) setLang(b.dataset.lang);
+});
 
 // ---------- Lagring ----------
 
@@ -41,7 +132,7 @@ function stars(p, w) {
   return s;
 }
 
-const starsHtml = n => `<span class="stars" aria-label="${n} av 3 stjärnor">${[0, 1, 2].map(i => icon(i < n ? 'star' : 'starO', i < n ? 'on' : '')).join('')}</span>`;
+const starsHtml = n => `<span class="stars" aria-label="${T('starsOf', n)}">${[0, 1, 2].map(i => icon(i < n ? 'star' : 'starO', i < n ? 'on' : '')).join('')}</span>`;
 const photoImg = (src, cls) => `<img class="avatar photo ${cls || ''}" src="${src}" alt="">`;
 const pAvatar = (p, cls) => p.photo ? photoImg(p.photo, cls) : avatar(p.avatar, p.name, p.id, cls);
 
@@ -101,10 +192,10 @@ function speak(html) {
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
   const text = html.replace(/<br\s*\/?>/g, '. ').replace(/<[^>]+>/g, '')
-    .replace(/(\b[RLUDFBMfr])'/g, '$1 prim').replace(/\b([RLUDFBMfr])2\b/g, '$1 två');
+    .replace(/(\b[RLUDFBMfr])'/g, lang === 'en' ? '$1 prime' : '$1 prim').replace(/\b([RLUDFBMfr])2\b/g, lang === 'en' ? '$1 two' : '$1 två');
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'sv-SE';
-  const voice = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith('sv'));
+  u.lang = lang === 'en' ? 'en-GB' : 'sv-SE';
+  const voice = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith(lang));
   if (voice) u.voice = voice;
   u.rate = 0.95;
   speechSynthesis.speak(u);
@@ -145,7 +236,7 @@ function modal(html, buttons) {
 
 function topbar({ back = '#/map', middle = '', right = '' } = {}) {
   return `<header class="topbar">
-    <a class="icon-btn" href="${back}" aria-label="Stäng">${icon('close')}</a>
+    <a class="icon-btn" href="${back}" aria-label="${T('close')}">${icon('close')}</a>
     <div class="topbar-mid">${middle}</div>
     <div class="topbar-right">${right}</div>
   </header>`;
@@ -186,16 +277,16 @@ function createPlayer(host, cfg) {
         <div class="chips-wrap"></div>
         <div class="follow hidden" aria-live="polite"></div>
         <div class="controls">
-          <button class="ctl" data-a="reset" aria-label="Börja om">${icon('restart')}</button>
-          <button class="ctl" data-a="back" aria-label="Ett drag bakåt">${icon('stepB')}</button>
-          <button class="ctl play" data-a="play" aria-label="Spela">${icon('play')}</button>
-          <button class="ctl" data-a="fwd" aria-label="Ett drag framåt">${icon('stepF')}</button>
-          <button class="ctl speed" data-a="speed" aria-label="Långsamt">½×</button>
-          <button class="ctl follow-btn" data-a="follow" aria-label="Följ med på din kub">${icon('hand')}<span>Följ med</span></button>
+          <button class="ctl" data-a="reset" aria-label="${T('startOver')}">${icon('restart')}</button>
+          <button class="ctl" data-a="back" aria-label="${T('moveBack')}">${icon('stepB')}</button>
+          <button class="ctl play" data-a="play" aria-label="${T('play')}">${icon('play')}</button>
+          <button class="ctl" data-a="fwd" aria-label="${T('moveFwd')}">${icon('stepF')}</button>
+          <button class="ctl speed" data-a="speed" aria-label="${T('slow')}">½×</button>
+          <button class="ctl follow-btn" data-a="follow" aria-label="${T('followLabel')}">${icon('hand')}<span>${T('follow')}</span></button>
         </div>` : ''}
       ${cfg.pad ? `
         <div class="pad">${padMoves.map(m => `<button class="padbtn" data-m="${m}"><b>${m}</b><i>${moveHint(parseAlg(m)[0]).arrow}</i></button>`).join('')}
-        <button class="padbtn wide" data-m="reset">${icon('restart')} Nollställ</button></div>` : ''}
+        <button class="padbtn wide" data-m="reset">${icon('restart')} ${T('resetCube')}</button></div>` : ''}
     </div>`;
 
   // Brantare vinkel när det är toppen man ska titta på
@@ -220,23 +311,23 @@ function createPlayer(host, cfg) {
     }
     if (playBtn) {
       playBtn.innerHTML = icon(playing ? 'pause' : 'play');
-      playBtn.setAttribute('aria-label', playing ? 'Pausa' : 'Spela');
+      playBtn.setAttribute('aria-label', T(playing ? 'pause' : 'play'));
     }
     if (followEl && following) {
       if (i < tokens.length) {
         const t = tokens[i], h = moveHint(t);
         followEl.innerHTML = `
-          <p class="follow-part">${named && parts[t.part].name ? `${esc(parts[t.part].name)} · ` : ''}drag ${i + 1} av ${tokens.length}</p>
+          <p class="follow-part">${named && parts[t.part].name ? `${esc(parts[t.part].name)} · ` : ''}${T('moveOf', i + 1, tokens.length)}</p>
           <div class="follow-move"><b>${esc(t.text)}</b><span>${h.arrow}</span></div>
           <p class="follow-text">${moveInstruction(t)}</p>
           <div class="follow-nav">
-            <button class="icon-btn big" data-f="back" aria-label="Ett drag bakåt" ${i === 0 ? 'disabled' : ''}>${icon('back')}</button>
-            <button class="btn primary" data-f="next">Gjort! Nästa ${icon('next')}</button>
+            <button class="icon-btn big" data-f="back" aria-label="${T('moveBack')}" ${i === 0 ? 'disabled' : ''}>${icon('back')}</button>
+            <button class="btn primary" data-f="next">${T('doneNext')} ${icon('next')}</button>
           </div>`;
       } else {
         followEl.innerHTML = `
-          <p class="follow-text">Klart! Ser din kub ut som den här?</p>
-          <div class="follow-nav"><button class="btn ghost" data-f="reset">${icon('restart')} Börja om</button></div>`;
+          <p class="follow-text">${T('followDone')}</p>
+          <div class="follow-nav"><button class="btn ghost" data-f="reset">${icon('restart')} ${T('startOver')}</button></div>`;
       }
       followEl.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
         if (b.dataset.f === 'next') forward();
@@ -295,7 +386,7 @@ function createPlayer(host, cfg) {
       following = !following;
       playing = false;
       b.classList.toggle('on', following);
-      b.querySelector('span').textContent = following ? 'Sluta följa' : 'Följ med';
+      b.querySelector('span').textContent = T(following ? 'stopFollow' : 'follow');
       followEl.classList.toggle('hidden', !following);
       // I följ med-läget göms dragraden och spelknapparna, så att allt ryms utan att man behöver scrolla
       const player = host.querySelector('.player');
@@ -348,8 +439,9 @@ const LOGO = `<svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
 function renderProfiles() {
   app.innerHTML = `
     <div class="screen profiles">
-      <div class="brand">${LOGO}<h1>Kubskolan</h1></div>
-      <p class="lead">Vem ska kuba idag?</p>
+      <div class="profiles-top">${langSwitch()}</div>
+      <div class="brand">${LOGO}<h1>${T('appName')}</h1></div>
+      <p class="lead">${T('whoToday')}</p>
       <div class="profile-grid">
         ${db.profiles.map(p => {
           const done = WORLDS.filter(w => p.lessons[w.id]).length;
@@ -357,12 +449,12 @@ function renderProfiles() {
           <button class="profile-card" data-id="${p.id}">
             ${pAvatar(p, 'lg')}
             <span class="pname">${esc(p.name)}</span>
-            <span class="pmeta">${done} av ${WORLDS.length} steg</span>
+            <span class="pmeta">${T('stepsOf', done, WORLDS.length)}</span>
           </button>`;
         }).join('')}
         <button class="profile-card add" data-id="new">
           <span class="add-circle">${icon('plus')}</span>
-          <span class="pname">Ny kubare</span>
+          <span class="pname">${T('newCuber')}</span>
         </button>
       </div>
     </div>`;
@@ -378,23 +470,23 @@ function newProfileDialog() {
   let f = 1 + Math.floor(Math.random() * (AV_FIGURES.length - 1)); // en figur från start, inte ett frågetecken
   let photo = null;
   const w = modal(`
-    <h2>Ny kubare</h2>
+    <h2>${T('newCuber')}</h2>
     <div class="av-preview"></div>
     <div class="photo-row">
-      <label class="btn small ghost photo-pick">${icon('image')} Välj bild<input type="file" accept="image/*" hidden></label>
-      <button class="btn small ghost photo-clear hidden">Ta bort bild</button>
+      <label class="btn small ghost photo-pick">${icon('image')} ${T('pickPhoto')}<input type="file" accept="image/*" hidden></label>
+      <button class="btn small ghost photo-clear hidden">${T('removePhoto')}</button>
     </div>
-    <input class="field" maxlength="16" placeholder="Vad heter du?" autocomplete="off">
+    <input class="field" maxlength="16" placeholder="${T('yourName')}" autocomplete="off">
     <div class="av-pickers">
-    <p class="pick-label">Figur</p>
-    <div class="pick figures">${AV_FIGURES.map((name, i) => i ? `<button class="pick-btn" data-f="${i}" aria-label="${name}"></button>` : '').join('')}</div>
-    <p class="pick-label">Form</p>
-    <div class="pick shapes">${Array.from({ length: AV_SHAPES }, (_, i) => `<button class="pick-btn" data-s="${i}" aria-label="Form ${i + 1}"></button>`).join('')}</div>
-    <p class="pick-label">Färg</p>
-    <div class="pick colors">${AV_COLORS.map((col, i) => `<button class="pick-btn dot" data-c="${i}" style="--c:${col}" aria-label="Färg ${i + 1}"></button>`).join('')}</div>
+    <p class="pick-label">${T('figure')}</p>
+    <div class="pick figures">${AV_FIGURES.map((name, i) => i ? `<button class="pick-btn" data-f="${i}" aria-label="${T('figures')[i] || name}"></button>` : '').join('')}</div>
+    <p class="pick-label">${T('shape')}</p>
+    <div class="pick shapes">${Array.from({ length: AV_SHAPES }, (_, i) => `<button class="pick-btn" data-s="${i}" aria-label="${T('shapeN', i + 1)}"></button>`).join('')}</div>
+    <p class="pick-label">${T('colour')}</p>
+    <div class="pick colors">${AV_COLORS.map((col, i) => `<button class="pick-btn dot" data-c="${i}" style="--c:${col}" aria-label="${T('colourN', i + 1)}"></button>`).join('')}</div>
     </div>`,
-  [['Avbryt', null, 'ghost'], [`${icon('check')} Klar`, () => {
-    const name = w.querySelector('.field').value.trim() || 'Kubare';
+  [[T('cancel'), null, 'ghost'], [`${icon('check')} ${T('done')}`, () => {
+    const name = w.querySelector('.field').value.trim() || T('defaultName');
     const p = newProfile(name, `s${s}c${c}f${f}`);
     if (photo) p.photo = photo;
     db.profiles.push(p); db.current = p.id; save();
@@ -439,17 +531,17 @@ function newProfileDialog() {
 const UNLOCK_CODE = '00000';
 
 function askUnlockCode(msg) {
-  const wrap = modal(`<h2>Lås upp alla steg</h2>
-    <p class="muted">${msg || 'Skriv koden.'}</p>
+  const wrap = modal(`<h2>${T('unlockAll')}</h2>
+    <p class="muted">${msg || T('enterCode')}</p>
     <input class="field gate" inputmode="numeric" autocomplete="off">`, [
-    ['Avbryt', null, 'ghost'],
-    ['Lås upp', () => check(), 'primary'],
+    [T('cancel'), null, 'ghost'],
+    [T('unlock'), () => check(), 'primary'],
   ]);
   const input = wrap.querySelector('.gate');
   const check = () => {
     wrap.remove();
     if (input.value.trim() === UNLOCK_CODE) { db.unlockAll = true; save(); renderMap(); }
-    else askUnlockCode('Fel kod. Försök igen.');
+    else askUnlockCode(T('wrongCode'));
   };
   input.onkeydown = e => { if (e.key === 'Enter') check(); };
   input.focus();
@@ -466,23 +558,24 @@ function renderMap() {
   app.innerHTML = `
     <div class="screen map">
       <header class="map-head">
-        <a class="who" href="#/" aria-label="Byt kubare">${pAvatar(p, 'md')}</a>
+        <a class="who" href="#/" aria-label="${T('switchCuber')}">${pAvatar(p, 'md')}</a>
         <div>
-          <h1>Hej ${esc(p.name)}!</h1>
-          <p class="sub">${doneCount === WORLDS.length ? 'Du har klarat alla steg.' : `${doneCount} av ${WORLDS.length} steg klara`}</p>
+          <h1>${T('hi', esc(p.name))}</h1>
+          <p class="sub">${doneCount === WORLDS.length ? T('allDone') : T('stepsDone', doneCount, WORLDS.length)}</p>
         </div>
         <div class="head-actions">
-          ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="Lås upp alla steg">${icon('lock')}</button>`}
-          <a class="icon-btn" href="#/overview" aria-label="Översikt">${icon('chart')}</a>
+          ${langSwitch()}
+          ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="${T('unlockAll')}">${icon('lock')}</button>`}
+          <a class="icon-btn" href="#/overview" aria-label="${T('overview')}">${icon('chart')}</a>
         </div>
       </header>
       <div class="tiles">
-        <a class="tile" href="#/train"><span class="tile-ic">${icon('target')}</span><b>Träna</b><small>Algoritmer</small></a>
-        <a class="tile alt" href="#/timer"><span class="tile-ic">${icon('timer')}</span><b>Tidtagning</b><small>Hur snabb är du?</small></a>
+        <a class="tile" href="#/train"><span class="tile-ic">${icon('target')}</span><b>${T('train')}</b><small>${T('algorithms')}</small></a>
+        <a class="tile alt" href="#/timer"><span class="tile-ic">${icon('timer')}</span><b>${T('timer')}</b><small>${T('howFast')}</small></a>
       </div>
       <button class="adventure-btn ${adventureOpen ? 'open' : ''}" aria-expanded="${adventureOpen}">
         <span class="tile-ic">${icon('flag')}</span>
-        <span class="adv-txt"><b>Äventyret</b><small>${doneCount} av ${WORLDS.length} steg klara</small></span>
+        <span class="adv-txt"><b>${T('adventure')}</b><small>${T('stepsDone', doneCount, WORLDS.length)}</small></span>
         <span class="adv-chev">${icon('next')}</span>
       </button>
       <div class="path-wrap ${adventureOpen ? '' : 'hidden'}">
@@ -496,13 +589,13 @@ function renderMap() {
             <li class="stop ${open ? '' : 'locked'} ${done ? 'done' : ''} ${i === current ? 'current' : ''}" style="--x:${x.toFixed(3)}">
               <button class="node" data-i="${i}" ${open ? '' : 'disabled'} aria-label="${esc(w.title)}">
                 ${open ? glyph(w.id) : icon('lock')}
-                ${i === current ? '<span class="node-tag">Start</span>' : ''}
+                ${i === current ? `<span class="node-tag">${T('start')}</span>` : ''}
               </button>
               <div class="stop-label">
-                <span class="stop-num">Steg ${i}</span>
+                <span class="stop-num">${T('step', i)}</span>
                 <b>${esc(w.title)}</b>
                 ${done ? starsHtml(stars(p, w)) : `<small>${esc(w.short)}</small>`}
-                ${open && done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} Frågor</a>` : ''}
+                ${open && done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} ${T('quiz')}</a>` : ''}
               </div>
             </li>`;
           }).join('')}
@@ -572,7 +665,7 @@ function renderLesson(wid, n) {
   const diagrams = (step.diagrams || (step.diagram ? [step.diagram] : [])).map(caseFig);
   const figs = diagrams.length ? `<div class="topviews">${diagrams.map(d => `
     <figure class="tv">
-      <span class="tv-side">Bak</span>${topView(d)}<span class="tv-side">Mot dig</span>
+      <span class="tv-side">${T('back')}</span>${topView(d)}<span class="tv-side">${T('towardYou')}</span>
       ${d.label ? `<figcaption>${esc(d.label)}</figcaption>` : ''}
     </figure>`).join('')}</div>` : '';
 
@@ -586,21 +679,21 @@ function renderLesson(wid, n) {
             ? `<div class="panel art-panel diagrams">${figs}</div>`
             : `<div class="panel art-panel ${step.practice ? 'practice' : ''}">${step.practice ? icon('hand', 'art') : glyph(w.id, 'art')}</div>`}
         <div class="panel text-panel">
-          <p class="eyebrow">${step.recap ? 'Kommer du ihåg?' : `Steg ${wi} · ${esc(w.title)}`}</p>
+          <p class="eyebrow">${step.recap ? T('remember') : `${T('step', wi)} · ${esc(w.title)}`}</p>
           <h2>${step.title}</h2>
           ${step.cube && figs ? figs : ''}
           <div class="lesson-text">${step.text}</div>
           ${step.rule ? `<p class="rule">${icon('spark')}<span>${step.rule}</span></p>` : ''}
           <div class="text-actions">
-            <button class="say" aria-label="Läs upp">${icon('sound')} Läs upp</button>
-            ${step.help ? `<button class="say help-btn">${icon('question')} Fastnade du?</button>` : ''}
+            <button class="say" aria-label="${T('readAloud')}">${icon('sound')} ${T('readAloud')}</button>
+            ${step.help ? `<button class="say help-btn">${icon('question')} ${T('stuck')}</button>` : ''}
           </div>
-          ${step.practice ? `<button class="btn primary huge done-btn">${icon('check')} Jag klarade det!</button>` : ''}
+          ${step.practice ? `<button class="btn primary huge done-btn">${icon('check')} ${T('iDidIt')}</button>` : ''}
         </div>
       </div>
       <footer class="navbar">
-        <button class="icon-btn big prev" ${n === 0 ? 'disabled' : ''} aria-label="Tillbaka">${icon('back')}</button>
-        ${last && step.practice ? '' : `<button class="btn primary next">${last ? 'Klar' : 'Nästa'} ${icon(last ? 'check' : 'next')}</button>`}
+        <button class="icon-btn big prev" ${n === 0 ? 'disabled' : ''} aria-label="${T('prev')}">${icon('back')}</button>
+        ${last && step.practice ? '' : `<button class="btn primary next">${T(last ? 'done' : 'next')} ${icon(last ? 'check' : 'next')}</button>`}
       </footer>
     </div>`;
 
@@ -609,12 +702,12 @@ function renderLesson(wid, n) {
   const helpBtn = app.querySelector('.help-btn');
   if (helpBtn) helpBtn.onclick = () => {
     const wrap = modal(`
-      <h2>Fastnade du?</h2>
-      <p class="muted">Välj det som stämmer, så hoppar du till rätt ställe.</p>
+      <h2>${T('stuck')}</h2>
+      <p class="muted">${T('pickMatch')}</p>
       <div class="help-list">${step.help.map(([text, to], k) => to == null
         ? `<p class="help-tip">${icon('spark')}<span>${esc(text)}</span></p>`
         : `<button class="btn ghost help-item" data-k="${k}">${esc(text)} ${icon('next')}</button>`).join('')}</div>`,
-    [['Stäng', null, 'ghost']]);
+    [[T('close'), null, 'ghost']]);
     wrap.querySelectorAll('.help-item').forEach(b => b.onclick = () => {
       const to = step.help[+b.dataset.k][1];
       track(`hjalp/${w.id}/steg-${n}/till-${to}`, true);
@@ -650,10 +743,10 @@ function renderQuiz(wid) {
       <div class="screen quiz">
         ${topbar({ middle: progressBar(q, total), right: `<span class="world-chip">${icon('question')}</span>` })}
         <div class="quiz-body">
-          <p class="eyebrow">Snabbfrågor · ${esc(w.title)}</p>
+          <p class="eyebrow">${T('quickQuiz')} · ${esc(w.title)}</p>
           <h2>${esc(item.q)}</h2>
           ${item.cube ? '<div class="panel cube-panel quiz-cube"></div>' : ''}
-          ${fig ? `<div class="topviews"><figure class="tv"><span class="tv-side">Bak</span>${topView(fig)}<span class="tv-side">Mot dig</span></figure></div>` : ''}
+          ${fig ? `<div class="topviews"><figure class="tv"><span class="tv-side">${T('back')}</span>${topView(fig)}<span class="tv-side">${T('towardYou')}</span></figure></div>` : ''}
           <div class="answers">${shuffle(item.options.map((o, k) => [o, k])).map(([o, k]) => `<button class="btn answer" data-k="${k}">${esc(o)}</button>`).join('')}</div>
           <div class="feedback"></div>
         </div>
@@ -669,8 +762,8 @@ function renderQuiz(wid) {
         else if (x === b) x.classList.add('wrong');
       });
       const fb = app.querySelector('.feedback');
-      fb.innerHTML = `<p class="fb-title ${ok ? 'ok' : ''}">${ok ? `${icon('check')} Rätt!` : `Nästan! Rätt svar: <b>${esc(item.options[0])}</b>`}</p>
-        <button class="btn primary nextq">${q + 1 < total ? 'Nästa' : 'Klar'} ${icon(q + 1 < total ? 'next' : 'check')}</button>`;
+      fb.innerHTML = `<p class="fb-title ${ok ? 'ok' : ''}">${ok ? `${icon('check')} ${T('right')}` : T('almost', esc(item.options[0]))}</p>
+        <button class="btn primary nextq">${T(q + 1 < total ? 'next' : 'done')} ${icon(q + 1 < total ? 'next' : 'check')}</button>`;
       fb.querySelector('.nextq').onclick = () => { q++; ask(); };
     });
   };
@@ -687,12 +780,12 @@ function renderQuiz(wid) {
     app.innerHTML = `
       <div class="screen center-screen">
         <div class="medal big">${score >= 0.8 ? icon('star') : glyph(w.id)}</div>
-        <h2>${first ? 'Steget klart!' : `${right} av ${total} rätt`}</h2>
-        <p class="muted">${first ? `${right} av ${total} rätt. ` : ''}${score >= 0.8 ? 'Superbra! Du fick en stjärna.' : `Svara rätt på alla ${total} för att få en stjärna.`}</p>
-        ${coreCases(w).length ? '<p class="muted">Öva algoritmerna under Träna för att få alla stjärnor.</p>' : ''}
+        <h2>${first ? T('stepDone') : T('rightOf', right, total)}</h2>
+        <p class="muted">${first ? `${T('rightOf', right, total)}. ` : ''}${score >= 0.8 ? T('gotStar') : T('allForStar', total)}</p>
+        ${coreCases(w).length ? `<p class="muted">${T('practiceForStars')}</p>` : ''}
         <div class="row">
-          ${score < 0.8 ? `<button class="btn ghost again">${icon('restart')} Igen</button>` : ''}
-          <a class="btn primary" href="#/map">Till kartan</a>
+          ${score < 0.8 ? `<button class="btn ghost again">${icon('restart')} ${T('again')}</button>` : ''}
+          <a class="btn primary" href="#/map">${T('toMap')}</a>
         </div>
       </div>`;
     const again = app.querySelector('.again');
@@ -710,13 +803,13 @@ function methodGroup(m, g) {
   const method = methodById(m);
   if (!method) return null;
   const toCases = grp => grp.cases.map(caseById);
-  if (g === 'all') return { method, title: `Alla i ${method.title}`, groups: method.groups.map(grp => [grp, toCases(grp)]), cases: method.groups.flatMap(toCases) };
+  if (g === 'all') return { method, title: T('allIn', method.title), groups: method.groups.map(grp => [grp, toCases(grp)]), cases: method.groups.flatMap(toCases) };
   const grp = method.groups.find(x => x.id === g);
   return grp ? { method, title: grp.title, groups: [[grp, toCases(grp)]], cases: toCases(grp) } : null;
 }
 const methodCases = method => [...new Set(method.groups.flatMap(grp => grp.cases))].map(caseById);
 const groupIcon = grp => grp.world ? glyph(grp.world) : icon('cube');
-const levelHtml = box => `<div class="level" aria-label="Nivå ${box} av 5">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= box ? 'on' : ''}"></span>`).join('')}</div>`;
+const levelHtml = box => `<div class="level" aria-label="${T('level', box)}">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= box ? 'on' : ''}"></span>`).join('')}</div>`;
 
 function trainCard(p, href, ic, title, sub, cases, extra = '') {
   const sits = cases.filter(c => (p.boxes[c.id] || 0) >= 3).length;
@@ -725,7 +818,7 @@ function trainCard(p, href, ic, title, sub, cases, extra = '') {
       <a class="train-main" href="${href}">
         <span class="train-ic">${ic}</span>
         <span class="train-txt"><b>${esc(title)}${extra}</b><small>${esc(sub)}</small>
-          <span class="train-meta">${cases.length} ${cases.length === 1 ? 'algoritm' : 'algoritmer'} · ${sits} sitter</span></span>
+          <span class="train-meta">${T('algs', cases.length)} · ${T('known', sits)}</span></span>
         ${icon('next')}
       </a>
     </section>`;
@@ -737,11 +830,11 @@ function renderTrainMenu() {
   const methods = last ? [methodById(last), ...TRAIN_METHODS.filter(m => m.id !== last)] : TRAIN_METHODS;
   app.innerHTML = `
     <div class="screen train-menu">
-      ${topbar({ middle: `<span class="topbar-title">${icon('target')} Träna</span>` })}
-      <p class="lead">Vilken metod vill du öva på?</p>
+      ${topbar({ middle: `<span class="topbar-title">${icon('target')} ${T('train')}</span>` })}
+      <p class="lead">${T('whichMethod')}</p>
       <div class="train-list">
         ${methods.map(m => trainCard(p, `#/train/${m.id}`, groupIcon(m), m.title, m.short, methodCases(m),
-          m.id === last ? ' <span class="last-tag">Senast</span>' : '')).join('')}
+          m.id === last ? ` <span class="last-tag">${T('lastTime')}</span>` : '')).join('')}
       </div>
     </div>`;
 }
@@ -754,10 +847,10 @@ function renderMethod(m) {
   app.innerHTML = `
     <div class="screen train-menu">
       ${topbar({ back: '#/train', middle: `<span class="topbar-title">${icon('target')} ${esc(method.title)}</span>` })}
-      <p class="lead">Vad vill du öva på?</p>
+      <p class="lead">${T('whatPractice')}</p>
       <div class="train-list">
         ${method.groups.map(grp => trainCard(p, `#/algs/${m}/${grp.id}`, groupIcon(grp), grp.title, grp.short, grp.cases.map(caseById))).join('')}
-        ${trainCard(p, `#/algs/${m}/all`, icon('shuffle'), `Alla i ${method.title}`, 'Blandat från alla steg', methodCases(method))}
+        ${trainCard(p, `#/algs/${m}/all`, icon('shuffle'), T('allIn', method.title), T('mixedAll'), methodCases(method))}
       </div>
     </div>`;
 }
@@ -778,10 +871,10 @@ function renderAlgs(m, g) {
               <b>${esc(c.name)}</b>
               <code class="alg">${esc(c.alg)}</code>
               ${levelHtml(p.boxes[c.id] || 0)}
-              <button class="btn small play-alg" data-id="${c.id}">${icon('play')} Visa på kuben</button>
+              <button class="btn small play-alg" data-id="${c.id}">${icon('play')} ${T('showOnCube')}</button>
             </div>
           </article>`).join('')}</div>`).join('')}
-      <div class="row"><a class="btn primary huge" href="#/drill/${m}/${g}">${icon('target')} Öva på de här</a></div>
+      <div class="row"><a class="btn primary huge" href="#/drill/${m}/${g}">${icon('target')} ${T('practiseThese')}</a></div>
     </div>`;
 
   // Fall i toppen visas ovanifrån; F2L- och vita hörn-fallen som en liten kub, eftersom de syns från sidan.
@@ -802,7 +895,7 @@ function renderAlgs(m, g) {
   app.querySelectorAll('.play-alg').forEach(b => b.onclick = () => {
     const c = caseById(b.dataset.id);
     let pl;
-    const wrap = modal(`<h2>${esc(c.name)}</h2><div class="modal-player"></div>`, [['Stäng', () => {
+    const wrap = modal(`<h2>${esc(c.name)}</h2><div class="modal-player"></div>`, [[T('close'), () => {
       pl.view.destroy();
       views = views.filter(v => v !== pl.view);
     }, 'primary']]);
@@ -842,14 +935,14 @@ function renderTrainer(m, g) {
     const options = shuffle([[c.alg, 0], [wrong[0], 1], [wrong[1], 2]]);
     app.innerHTML = `
       <div class="screen trainer">
-        ${topbar({ back: `#/algs/${m}/${g}`, middle: `<span class="topbar-title">${icon('target')} ${esc(sel.title)}</span>`, right: `<a class="mini-btn" href="#/algs/${m}/${g}">${icon('cube')} Algoritmer</a>` })}
+        ${topbar({ back: `#/algs/${m}/${g}`, middle: `<span class="topbar-title">${icon('target')} ${esc(sel.title)}</span>`, right: `<a class="mini-btn" href="#/algs/${m}/${g}">${icon('cube')} ${T('algorithms')}</a>` })}
         <div class="split">
           <div class="panel cube-panel trainer-cube"></div>
           <div class="panel text-panel trainer-side">
             <p class="eyebrow">${esc(groupOf(c).title)}</p>
-            <h2 class="case-name">Vad gör du här?</h2>
+            <h2 class="case-name">${T('whatHere')}</h2>
             ${levelHtml(box)}
-            <p class="hint muted">Vilken algoritm löser det?</p>
+            <p class="hint muted">${T('whichSolves')}</p>
             <div class="answers alg-answers">${options.map(([a, k]) => `<button class="btn answer" data-k="${k}"><code>${esc(a)}</code></button>`).join('')}</div>
             <div class="feedback"></div>
           </div>
@@ -871,10 +964,10 @@ function renderTrainer(m, g) {
       if (p.boxes[c.id] === 5 && b < 5) confetti();
       app.querySelector('.case-name').textContent = c.name;
       app.querySelector('.level').outerHTML = levelHtml(p.boxes[c.id]);
-      app.querySelector('.hint').textContent = 'Tryck på spela för att se lösningen på kuben.';
+      app.querySelector('.hint').textContent = T('tapPlay');
       const fb = app.querySelector('.feedback');
-      fb.innerHTML = `<p class="fb-title ${ok ? 'ok' : ''}">${ok ? `${icon('check')} Rätt!` : 'Nästan! Det gröna är rätt.'}</p>
-        <button class="btn primary nextq">Nästa ${icon('next')}</button>`;
+      fb.innerHTML = `<p class="fb-title ${ok ? 'ok' : ''}">${ok ? `${icon('check')} ${T('right')}` : T('almostGreen')}</p>
+        <button class="btn primary nextq">${T('next')} ${icon('next')}</button>`;
       fb.querySelector('.nextq').onclick = show;
       clearViews();
       createPlayer(cubeHost, { setupInv: c.alg, alg: c.alg, mask: c.mask });
@@ -897,10 +990,10 @@ function renderTimer() {
 
   app.innerHTML = `
     <div class="screen timer-screen">
-      ${topbar({ middle: `<span class="topbar-title">${icon('timer')} Tidtagning</span>`, right: pAvatar(p, 'sm') })}
+      ${topbar({ middle: `<span class="topbar-title">${icon('timer')} ${T('timer')}</span>`, right: pAvatar(p, 'sm') })}
       <div class="timer-pad" tabindex="0">
         <div class="time">0.00</div>
-        <p class="timer-help">Håll fingret här tills det blir grönt. Släpp för att starta. Tryck för att stoppa.</p>
+        <p class="timer-help">${T('timerHelp')}</p>
       </div>
       <div class="times"></div>
     </div>`;
@@ -914,12 +1007,12 @@ function renderTimer() {
     const avg = last5.length === 5 ? last5.reduce((a, t) => a + t.ms, 0) / 5 : null;
     app.querySelector('.times').innerHTML = `
       <div class="stats">
-        <div><small>Bästa</small><b>${best ? fmt(best) : '–'}</b></div>
-        <div><small>Snitt av 5</small><b>${avg ? fmt(avg) : '–'}</b></div>
-        <div><small>Lösningar</small><b>${p.times.length}</b></div>
+        <div><small>${T('best')}</small><b>${best ? fmt(best) : '–'}</b></div>
+        <div><small>${T('avg5')}</small><b>${avg ? fmt(avg) : '–'}</b></div>
+        <div><small>${T('solves')}</small><b>${p.times.length}</b></div>
       </div>
       <ol class="time-list">${times.map(t => `<li class="${t.ms === best ? 'best' : ''}">${t.ms === best ? icon('star') : ''}${fmt(t.ms)}</li>`).join('')}</ol>
-      ${times.length ? `<button class="btn ghost small del">${icon('trash')} Ta bort senaste</button>` : ''}`;
+      ${times.length ? `<button class="btn ghost small del">${icon('trash')} ${T('removeLast')}</button>` : ''}`;
     const del = app.querySelector('.del');
     if (del) del.onclick = () => { p.times.pop(); save(); drawTimes(); };
   };
@@ -987,7 +1080,7 @@ function renderTimer() {
 function renderOverview() {
   app.innerHTML = `
     <div class="screen parent">
-      ${topbar({ back: '#/map', middle: `<span class="topbar-title">${icon('chart')} Översikt</span>` })}
+      ${topbar({ back: '#/map', middle: `<span class="topbar-title">${icon('chart')} ${T('overview')}</span>` })}
       ${[me()].map(p => {
         const best = p.times.length ? fmt(Math.min(...p.times.map(t => t.ms))) : '–';
         const week = p.times.filter(t => t.at > Date.now() - 7 * 864e5).length;
@@ -996,38 +1089,38 @@ function renderOverview() {
         <section class="panel pcard">
           <h3>${pAvatar(p, 'sm')} ${esc(p.name)}</h3>
           <div class="pstats">
-            <div><small>Algoritmer som sitter</small><b>${mastered} / ${ALL_CASES.length}</b></div>
-            <div><small>Bästa tid</small><b>${best}</b></div>
-            <div><small>Lösningar, 7 dagar</small><b>${week}</b></div>
+            <div><small>${T('mastered')}</small><b>${mastered} / ${ALL_CASES.length}</b></div>
+            <div><small>${T('bestTime')}</small><b>${best}</b></div>
+            <div><small>${T('week')}</small><b>${week}</b></div>
           </div>
           <table>
             ${WORLDS.map((w, i) => `<tr><td><span class="tglyph">${glyph(w.id)}</span>${i}. ${esc(w.title)}</td><td>${starsHtml(stars(p, w))}</td>
-              <td>${p.quiz[w.id] != null ? `Frågor ${Math.round(p.quiz[w.id] * 100)} %` : ''}</td></tr>`).join('')}
+              <td>${p.quiz[w.id] != null ? T('quizPct', Math.round(p.quiz[w.id] * 100)) : ''}</td></tr>`).join('')}
           </table>
           <div class="row start">
-            <button class="btn ghost small reset" data-id="${p.id}">${icon('restart')} Nollställ framsteg</button>
-            <button class="btn ghost small delete" data-id="${p.id}">${icon('trash')} Ta bort profil</button>
+            <button class="btn ghost small reset" data-id="${p.id}">${icon('restart')} ${T('resetProgress')}</button>
+            <button class="btn ghost small delete" data-id="${p.id}">${icon('trash')} ${T('deleteProfile')}</button>
           </div>
         </section>`;
       }).join('')}
       <section class="panel pcard">
-        <label class="toggle"><input type="checkbox" class="unlock" ${db.unlockAll ? 'checked' : ''}><span class="switch"></span> Lås upp alla steg</label>
-        <p class="muted small">Sparas bara i den här enheten/webbläsaren.</p>
+        <label class="toggle"><input type="checkbox" class="unlock" ${db.unlockAll ? 'checked' : ''}><span class="switch"></span> ${T('unlockAll')}</label>
+        <p class="muted small">${T('deviceOnly')}</p>
       </section>
     </div>`;
   app.querySelector('.unlock').onchange = e => { db.unlockAll = e.target.checked; save(); };
   app.querySelectorAll('.reset').forEach(b => b.onclick = () => {
     const p = db.profiles.find(x => x.id === b.dataset.id);
-    modal(`<h2>Nollställa ${esc(p.name)}?</h2><p class="muted">Alla stjärnor och tider försvinner.</p>`,
-      [['Avbryt', null, 'ghost'], ['Nollställ', () => {
+    modal(`<h2>${T('resetQ', esc(p.name))}</h2><p class="muted">${T('resetWarn')}</p>`,
+      [[T('cancel'), null, 'ghost'], [T('resetBtn'), () => {
         Object.assign(p, newProfile(p.name, p.avatar), { id: p.id });
         save(); renderOverview();
       }, 'danger']]);
   });
   app.querySelectorAll('.delete').forEach(b => b.onclick = () => {
     const p = db.profiles.find(x => x.id === b.dataset.id);
-    modal(`<h2>Ta bort ${esc(p.name)}?</h2><p class="muted">Profilen och alla framsteg försvinner.</p>`,
-      [['Avbryt', null, 'ghost'], ['Ta bort', () => {
+    modal(`<h2>${T('deleteQ', esc(p.name))}</h2><p class="muted">${T('deleteWarn')}</p>`,
+      [[T('cancel'), null, 'ghost'], [T('deleteBtn'), () => {
         db.profiles = db.profiles.filter(x => x.id !== p.id);
         if (db.current === p.id) db.current = null;
         save(); location.hash = '#/';
@@ -1065,4 +1158,9 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   }).catch(() => {});
 }
 if (window.speechSynthesis) speechSynthesis.getVoices();
+
+// Byte av språk: rita om skärmen (innehållet i content.js har redan bytts ut)
+const setTitle = () => { document.title = T('appName'); };
+onLang(() => { setTitle(); document.querySelectorAll('.modal-wrap').forEach(m => m.remove()); route(); });
+setTitle();
 route();

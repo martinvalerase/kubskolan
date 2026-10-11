@@ -7,6 +7,10 @@
 // Fall (cases): algoritmer som tränas i Träningen.
 // setupInv: kuben visas som om algoritmen skulle lösa den, så att bild och algoritm alltid stämmer.
 // highlight: bitar angivna med sin hemposition (t.ex. "DFR" = vit-grön-orange hörnet).
+// Texterna här är svenska. Engelska texter ligger i content.en.js och läggs ovanpå, se localize() längst ner.
+
+import { lang, merge, onLang } from './i18n.js';
+import { EN } from './content.en.js';
 
 const DAISY = 'L2 U R2 F2 U B2';
 const DAISY_SIMPLE = 'F2 R2 B2 L2';
@@ -23,7 +27,7 @@ const UB_PARTS = [{ name: 'Start', alg: 'R2 U' }, { name: 'Snurra', alg: "R U R'
 const sw = face => `<i class="sw sw-${face}"></i>`; // liten färgruta i texten
 const dances = n => Array.from({ length: n }, (_, k) => ({ name: `Dans ${k + 1}`, alg: DANCE }));
 
-export const WORLDS = [
+const WORLDS_SV = [
   {
     id: 'w0',
     title: 'Lär känna kuben',
@@ -681,8 +685,8 @@ const TRAIN_EXTRA_CASES = [
   { id: 'beg_twist', name: 'Vrid hörnen', alg: [TWIST, TWIST, 'U', TWIST, TWIST, TWIST, TWIST, "U'"].join(' '), mask: 'oll' },
 ];
 
-export const ALL_CASES = [
-  ...WORLDS.flatMap(w => (w.cases || []).map(c => ({ ...c, world: w.id }))),
+const ALL_CASES_SV = [
+  ...WORLDS_SV.flatMap(w => (w.cases || []).map(c => ({ ...c, world: w.id }))),
   ...TRAIN_EXTRA_CASES.map(c => ({ ...c, world: null })),
 ];
 
@@ -691,7 +695,7 @@ export const ALL_CASES = [
 const G_CROSS = { id: 'cross', title: 'Gula korset', short: 'Kanterna i toppen gula', world: 'w5', cases: ['oll_line', 'oll_l', 'oll_dot'] };
 const G_F2L = { id: 'f2l', title: 'F2L-par', short: 'Hörn och kant samtidigt', world: 'w9', cases: ['f2l_1', 'f2l_2', 'f2l_3', 'f2l_4'] };
 const G_F2L_MORE = { id: 'f2l2', title: 'Fler F2L-par', short: 'Isär, vända kanter och vitt uppåt', world: 'w9', cases: ['f2l_5', 'f2l_6', 'f2l_7', 'f2l_8', 'f2l_9', 'f2l_10'] };
-export const TRAIN_METHODS = [
+const TRAIN_METHODS_SV = [
   {
     id: 'beg', world: 'w4', title: 'Nybörjarmetoden', short: 'Grunderna, våning för våning',
     groups: [
@@ -725,4 +729,29 @@ export const TRAIN_METHODS = [
     ],
   },
 ];
+
+// Innehållet på det valda språket. Byts ut när språket ändras (ES-moduler ger levande bindningar).
+export let WORLDS, ALL_CASES, TRAIN_METHODS;
+function localize() {
+  if (lang === 'sv') {
+    WORLDS = WORLDS_SV; ALL_CASES = ALL_CASES_SV; TRAIN_METHODS = TRAIN_METHODS_SV;
+    return;
+  }
+  const caseName = c => ({ ...c, name: EN.cases[c.id] || c.name });
+  WORLDS = WORLDS_SV.map(w => {
+    const lw = merge(w, EN.worlds[w.id]);
+    return w.cases ? { ...lw, cases: w.cases.map(caseName) } : lw;
+  });
+  ALL_CASES = ALL_CASES_SV.map(caseName);
+  TRAIN_METHODS = TRAIN_METHODS_SV.map(m => {
+    const em = EN.methods[m.id] || {};
+    return {
+      ...m, title: em.title || m.title, short: em.short || m.short,
+      groups: m.groups.map(g => merge(merge(g, EN.groups[g.id]), em.groups && em.groups[g.id])),
+    };
+  });
+}
+localize();
+onLang(localize);
+
 export const caseById = id => ALL_CASES.find(c => c.id === id);

@@ -179,6 +179,18 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02
 .map-head .head-actions { margin-left: auto; display: flex; gap: 8px; }
 .map-head .head-actions .icon-btn { width: 40px; height: 40px; border-radius: 14px; color: var(--ink-3); }
 .map-head .head-actions .icon-btn .ic { width: 20px; height: 20px; }
+.map-head > div:nth-child(2) { min-width: 0; }
+.map-head h1 { overflow-wrap: anywhere; }
+
+/* Språkväljaren */
+.lang-switch { display: inline-flex; align-self: center; padding: 3px; gap: 2px; border-radius: 14px; background: var(--panel-2); flex: none; }
+.lang-switch button {
+  border: 0; background: none; color: var(--ink-3); font: 600 .8rem/1 var(--body); letter-spacing: .04em;
+  min-width: 34px; height: 34px; padding: 0 6px; border-radius: 11px; cursor: pointer;
+}
+.lang-switch button[aria-pressed="true"] { background: var(--mint); color: var(--on-accent); }
+.profiles { position: relative; }
+.profiles-top { position: absolute; top: calc(env(safe-area-inset-top) + 14px); right: max(16px, env(safe-area-inset-right)); }
 .who { border-radius: 50%; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 26px; }
 .tile {
@@ -562,6 +574,11 @@ code.alg {
   .stop-label { max-width: 150px; }
   .tile { grid-template-columns: 1fr; text-align: left; }
   .tile-ic { grid-row: auto; margin-bottom: 8px; }
+  .map-head { gap: 10px; }
+  .map-head h1 { font-size: 1.6rem; }
+  .map-head .head-actions { gap: 6px; }
+  .map-head .head-actions .icon-btn { width: 36px; height: 36px; }
+  .lang-switch button { min-width: 30px; height: 30px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
