@@ -575,12 +575,12 @@ export const WORLDS = [
     quiz: [
       { q: 'Vad är ett par?', options: ['Ett vitt hörn och dess kant', 'Två hörn', 'Två mittbitar'] },
       { q: 'Vilken algoritm passar här?', options: ["R U R'", "F' U' F", "U R U' R'"], cube: { caseRef: 'f2l_1', highlight: ['DFR', 'FR'] } },
-      { q: 'Vitt framåt, kanten till vänster. Vilken algoritm?', options: ["F' U' F", "R U R'", "U' F' U F"] },
+      { q: 'Det vita på hörnet pekar uppåt. Vad gör du först?', options: ['Vänder hörnet så att vitt pekar åt sidan', 'Sätter in paret direkt', 'Gör Sune'], cube: { caseRef: 'f2l_9', highlight: ['DFR', 'FR'] } },
     ],
     steps: [
       {
         title: 'Snabbare: par!',
-        text: 'Proffsen gör inte hörnen och mittenkanterna var för sig. De sätter ihop ett vitt hörn och dess kant till ett <b>par</b> och stoppar in båda samtidigt.<br><br>Här är de fyra enklaste fallen. Hörnet står alltid uppe till höger fram. Lös korset som vanligt först.',
+        text: 'Proffsen gör inte hörnen och mittenkanterna var för sig. De sätter ihop ett vitt hörn och dess kant till ett <b>par</b> och stoppar in båda samtidigt.<br><br>Här är de vanligaste fallen. Hörnet står alltid uppe till höger fram. Lös korset som vanligt först.',
         cube: { mask: 'f2l' },
       },
       {
@@ -604,9 +604,57 @@ export const WORLDS = [
         cube: { caseRef: 'f2l_4', highlight: ['DFR', 'FR'] },
       },
       {
+        title: 'Sex fall till',
+        text: 'Ofta står hörnet och kanten <b>isär</b>, eller så pekar det vita <b>uppåt</b>. Då gör vi det i två delar:<br>1. <b>Bygg paret</b>: för ihop hörnet och kanten.<br>2. <b>Sätt in paret</b>.<br><br>Hörnet står fortfarande uppe till höger fram.',
+        rule: 'Bygg paret först, sätt in det sedan.',
+        cube: { caseRef: 'f2l_5', alg: '', highlight: ['DFR', 'FR'] },
+      },
+      {
+        title: 'Vitt framåt, kanten bak',
+        text: 'Hörnet har vitt <b>framåt</b>. Kanten ligger längst <b>bak</b> på toppen. De står isär, så vi bygger ett par först.',
+        cube: { caseRef: 'f2l_5', parts: [{ name: 'Bygg paret', alg: "U' R U R'" }, { name: 'Sätt in paret', alg: "U2 R U' R'" }], highlight: ['DFR', 'FR'] },
+      },
+      {
+        title: 'Vitt åt höger, kanten till vänster',
+        text: 'Spegelbilden: hörnet har vitt <b>åt höger</b> och kanten ligger till <b>vänster</b>. Samma idé, fast med framsidan.',
+        cube: { caseRef: 'f2l_6', parts: [{ name: 'Bygg paret', alg: "U F' U' F" }, { name: 'Sätt in paret', alg: "U2 F' U F" }], highlight: ['DFR', 'FR'] },
+      },
+      {
+        title: 'Vitt framåt, kanten vänd',
+        text: 'Hörnet har vitt <b>framåt</b> och kanten ligger till <b>vänster</b>, precis som i F\' U\' F. Men kanten är vänd åt andra hållet: den <b>gröna</b> färgen pekar uppåt.',
+        cube: { caseRef: 'f2l_7', parts: [{ name: 'Bygg paret', alg: "U' R U2 R'" }, { name: 'Sätt in paret', alg: "U2 R U' R'" }], highlight: ['DFR', 'FR'] },
+      },
+      {
+        title: 'Vitt åt höger, kanten vänd',
+        text: 'Hörnet har vitt <b>åt höger</b> och kanten ligger längst <b>bak</b>, precis som i R U R\'. Men kanten är vänd: den <b>orange</b> färgen pekar uppåt.',
+        cube: { caseRef: 'f2l_8', parts: [{ name: 'Bygg paret', alg: "U F' U2 F" }, { name: 'Sätt in paret', alg: "U2 F' U F" }], highlight: ['DFR', 'FR'] },
+      },
+      {
+        title: 'Vitt uppåt, kanten till höger',
+        text: 'Det vita på hörnet pekar <b>uppåt</b>. Kanten ligger bredvid till <b>höger</b>.<br><br>Vänd först hörnet med R U2 R\'. Då pekar det vita åt sidan, och paret kan sättas in.',
+        rule: 'Vitt uppåt? Vänd hörnet först, så pekar vitt åt sidan.',
+        cube: { caseRef: 'f2l_9', parts: [{ name: 'Vänd hörnet', alg: "R U2 R'" }, { name: 'Sätt in paret', alg: "U' R U R'" }], highlight: ['DFR', 'FR'] },
+      },
+      {
+        title: 'Vitt uppåt, kanten fram',
+        text: 'Spegelbilden: det vita pekar <b>uppåt</b> och kanten ligger <b>framför</b>. Vänd hörnet med F\' U2 F och sätt in paret.',
+        rule: 'Vitt uppåt? Vänd hörnet först, så pekar vitt åt sidan.',
+        cube: { caseRef: 'f2l_10', parts: [{ name: 'Vänd hörnet', alg: "F' U2 F" }, { name: 'Sätt in paret', alg: "U F' U' F" }], highlight: ['DFR', 'FR'] },
+      },
+      {
         title: 'Din tur!',
         text: 'Prova att lösa två våningar med par i stället för steg för steg. Det känns svårt först, men blir snabbt!',
         practice: true,
+        help: [
+          ['Vitt åt höger, kanten bak', 1],
+          ['Vitt framåt, kanten till vänster', 2],
+          ['Vitt framåt, kanten till höger', 3],
+          ['Vitt åt höger, kanten fram', 4],
+          ['Hörnet och kanten står isär', 5],
+          ['Kanten ligger rätt men är vänd fel', 8],
+          ['Det vita pekar uppåt', 10],
+          ['Känner du inte igen läget? Vrid toppen och titta igen. Ofta blir det ett av fallen.', null],
+        ],
       },
     ],
     cases: [
@@ -614,6 +662,12 @@ export const WORLDS = [
       { id: 'f2l_2', name: "F' U' F", alg: "F' U' F", mask: 'f2l' },
       { id: 'f2l_3', name: "U R U' R'", alg: "U R U' R'", mask: 'f2l' },
       { id: 'f2l_4', name: "U' F' U F", alg: "U' F' U F", mask: 'f2l' },
+      { id: 'f2l_5', name: 'Vitt framåt, kanten bak', alg: "U' R U R' U2 R U' R'", mask: 'f2l' },
+      { id: 'f2l_6', name: 'Vitt åt höger, kanten till vänster', alg: "U F' U' F U2 F' U F", mask: 'f2l' },
+      { id: 'f2l_7', name: 'Vitt framåt, kanten vänd', alg: "U' R U2 R' U2 R U' R'", mask: 'f2l' },
+      { id: 'f2l_8', name: 'Vitt åt höger, kanten vänd', alg: "U F' U2 F U2 F' U F", mask: 'f2l' },
+      { id: 'f2l_9', name: 'Vitt uppåt, kanten till höger', alg: "R U2 R' U' R U R'", mask: 'f2l' },
+      { id: 'f2l_10', name: 'Vitt uppåt, kanten fram', alg: "F' U2 F U F' U' F", mask: 'f2l' },
     ],
   },
 ];
@@ -636,6 +690,7 @@ export const ALL_CASES = [
 // world kopplar gruppen till stegets ikon på kartan.
 const G_CROSS = { id: 'cross', title: 'Gula korset', short: 'Kanterna i toppen gula', world: 'w5', cases: ['oll_line', 'oll_l', 'oll_dot'] };
 const G_F2L = { id: 'f2l', title: 'F2L-par', short: 'Hörn och kant samtidigt', world: 'w9', cases: ['f2l_1', 'f2l_2', 'f2l_3', 'f2l_4'] };
+const G_F2L_MORE = { id: 'f2l2', title: 'Fler F2L-par', short: 'Isär, vända kanter och vitt uppåt', world: 'w9', cases: ['f2l_5', 'f2l_6', 'f2l_7', 'f2l_8', 'f2l_9', 'f2l_10'] };
 export const TRAIN_METHODS = [
   {
     id: 'beg', world: 'w4', title: 'Nybörjarmetoden', short: 'Grunderna, våning för våning',
@@ -662,6 +717,7 @@ export const TRAIN_METHODS = [
     id: 'cfop', world: 'w8', title: '2-Look CFOP', short: 'F2L-par, hela 2-look OLL och PLL',
     groups: [
       G_F2L,
+      G_F2L_MORE,
       G_CROSS,
       { id: 'oll', title: 'Gula toppen', short: 'Alla sju hörnfallen', world: 'w6', cases: ['sune', 'antisune', 'oll_h', 'oll_pi', 'oll_u', 'oll_t', 'oll_bowtie'] },
       { id: 'pllc', title: 'Hörnen på plats', short: 'T-perm och Y-perm', world: 'w7', cases: ['tperm', 'yperm'] },
