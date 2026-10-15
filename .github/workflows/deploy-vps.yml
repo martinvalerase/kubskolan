@@ -46,5 +46,5 @@ jobs:
         run: |
           rsync -az --delete \
             --exclude '.git' --exclude '.github' --exclude '.gitignore' --exclude '.gitattributes' \
-            --exclude 'deploy' --exclude 'tools' --exclude 'serve.ps1' --exclude 'README.md' \
+            --exclude 'deploy' --exclude 'supabase' --exclude 'tools' --exclude 'serve.ps1' --exclude 'README.md' \
             ./ "deploy@${VPS_HOST}:/var/www/kubskolan/"

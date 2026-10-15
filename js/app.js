@@ -2,6 +2,9 @@ import { CubeView, parseAlg, invertAlg, moveHint, moveInstruction } from './cube
 import { topView } from './diagram.js';
 import { WORLDS, ALL_CASES, caseById, TRAIN_METHODS } from './content.js';
 import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES, AV_FIGURES } from './icons.js';
+import { renderGames, renderSnake, renderBlocks } from './games.js';
+import { accountEmail, sendCode, verifyCode, signInWithPassword, setPassword, recordConsent, signOut, deleteAccount } from './auth.js';
+import { createSync } from './sync.js';
 
 // ---------- Lagring ----------
 
@@ -13,15 +16,58 @@ function load() {
     const d = JSON.parse(localStorage.getItem(KEY));
     if (d && Array.isArray(d.profiles)) return d;
   } catch { /* tom eller blockerad lagring */ }
-  return { profiles: [], current: null, unlockAll: false };
+  return { profiles: [], current: null, unlockAll: false, guest: false };
 }
-function save() {
+function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { /* ignoreras */ }
+}
+// Varje ändring sparas lokalt direkt och synkas till kontot en stund senare, om man är inloggad.
+let sync = null;
+function save() {
+  persist();
+  if (sync && accountEmail()) sync.schedule();
 }
 const me = () => db.profiles.find(p => p.id === db.current);
 
 function newProfile(name, av) {
   return { id: Date.now().toString(36), name, avatar: av, lessons: {}, quiz: {}, boxes: {}, times: [], stepAt: {} };
+}
+
+// ---------- Gäst ----------
+
+// En gäst har ingen egen profil att skapa. Appen håller en dold profil med guest: true, som aldrig synkas
+// och som inloggade aldrig ser. Äldre profiler på enheten är inte gästprofilen.
+const hasProgress = p => !!(Object.keys(p.lessons).length || Object.keys(p.quiz).length || Object.keys(p.boxes).length || p.times.length);
+const realProfiles = () => db.profiles.filter(p => !p.guest);
+
+function ensureGuest() {
+  let g = db.profiles.find(p => p.guest);
+  if (!g) { g = { ...newProfile('Gäst', 's0c0'), guest: true }; db.profiles.push(g); }
+  db.current = g.id;
+  persist();
+  return g;
+}
+
+// Efter inloggning: har gästen gjort något erbjuds den att bli en riktig kubare i kontot.
+function offerGuestSave() {
+  const g = db.profiles.find(p => p.guest);
+  if (!g || g.offered || !hasProgress(g)) return Promise.resolve();
+  return new Promise(resolve => {
+    let input;
+    const w = modal(`
+      <h2>Spara dina framsteg?</h2>
+      <p class="muted">Du har redan kommit en bit på vägen som gäst. Vill du spara det i kontot?</p>
+      <input class="field" maxlength="16" placeholder="Vad heter kubaren?" autocomplete="off">`,
+    [['Hoppa över', () => { g.offered = true; persist(); resolve(); }, 'ghost'],
+      [`${icon('check')} Spara`, () => {
+        g.guest = false;
+        g.name = input.value.trim() || 'Kubare';
+        save();
+        resolve();
+      }, 'primary']]);
+    input = w.querySelector('.field');
+    setTimeout(() => input.focus(), 50);
+  });
 }
 
 // ---------- Progress ----------
@@ -40,6 +86,19 @@ function stars(p, w) {
   if (coreCases(w).every(c => (p.boxes[c.id] || 0) >= 3)) s++;
   return s;
 }
+
+// Det som visas på topplistan, räknat av appen och skickat med synken.
+const summary = p => ({
+  stars: WORLDS.reduce((n, w) => n + stars(p, w), 0),
+  mastered: ALL_CASES.filter(c => (p.boxes[c.id] || 0) >= 3).length,
+});
+
+// Ritar om skärmar som visar framsteg när synken har hämtat något nytt. Aldrig mitt i en lektion, ett spel eller en tidtagning.
+function refreshAfterSync() {
+  const name = location.hash.replace(/^#\/?/, '').split('/')[0];
+  if (['', 'map', 'lessons', 'overview', 'konto'].includes(name)) route();
+}
+sync = createSync({ getDb: () => db, persist, summary, onChange: refreshAfterSync });
 
 const starsHtml = n => `<span class="stars" aria-label="${n} av 3 stjärnor">${[0, 1, 2].map(i => icon(i < n ? 'star' : 'starO', i < n ? 'on' : '')).join('')}</span>`;
 const photoImg = (src, cls) => `<img class="avatar photo ${cls || ''}" src="${src}" alt="">`;
@@ -315,21 +374,42 @@ function createPlayer(host, cfg) {
 
 // ---------- Router ----------
 
+// Skärmar som kräver konto. Gäster ser dem på kartan, men möts av renderGate().
+const LOCKED = ['train', 'algs', 'drill', 'timer', 'games', 'snake', 'blocks', 'overview'];
+
+// Det spelen i games.js behöver från appen. onLeave anropas när man lämnar skärmen.
+const gameCtx = () => ({ app, me, save, topbar, pAvatar, confetti, track, onLeave: fn => cleanups.push(fn) });
+
 function route() {
   clearScreen();
   const [name, a, b] = location.hash.replace(/^#\/?/, '').split('/');
-  if (!me() && name) { location.hash = '#/'; return; }
+  if (accountEmail() && me() && me().guest) db.current = null; // en inloggad ska välja en riktig kubare
+  if (!me() && name && !['konto', 'integritet', 'start'].includes(name)) { location.hash = '#/'; return; }
   window.scrollTo(0, 0);
   track('/' + (name ? [name, a, b].filter(x => x != null).join('/') : ''));
-  if (!name) return renderProfiles();
+  if (!name) {
+    if (accountEmail()) return renderProfiles();
+    if (!db.guest) return renderStart();
+    // Gäst utan äldre profiler går direkt in. Med äldre profiler på enheten visas väljaren.
+    if (!realProfiles().length) { ensureGuest(); location.hash = '#/map'; return; }
+    return renderProfiles();
+  }
+  if (name === 'start') return renderStart();
+  if (LOCKED.includes(name) && !accountEmail()) return renderGate();
   if (name === 'map') return renderMap();
+  if (name === 'lessons') return renderLessons();
   if (name === 'lesson') return renderLesson(a, parseInt(b || '0', 10));
   if (name === 'quiz') return renderQuiz(a);
   if (name === 'train') return a ? renderMethod(a) : renderTrainMenu();
   if (name === 'algs') return renderAlgs(a, b);
   if (name === 'drill') return renderTrainer(a, b);
   if (name === 'timer') return renderTimer();
+  if (name === 'games') return renderGames(gameCtx());
+  if (name === 'snake') return renderSnake(gameCtx());
+  if (name === 'blocks') return renderBlocks(gameCtx());
   if (name === 'overview') return renderOverview();
+  if (name === 'konto') return renderAccount(a);
+  if (name === 'integritet') return renderPrivacy();
   if (name === 'parent') { location.hash = '#/overview'; return; } // gamla länkar
   location.hash = '#/';
 }
@@ -345,13 +425,47 @@ const LOGO = `<svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
   <path d="M24 4 41 13.5v21L24 44 7 34.5v-21zM7 13.5 24 23l17-9.5M24 23v21M15.5 8.75l17 9.5M32.5 8.75l-17 9.5M7 24l17 9.5 17-9.5M15.5 18.25v21M32.5 18.25v21" fill="none" stroke="#0B2219" stroke-width="2.2" stroke-linejoin="round"/>
 </svg>`;
 
+function renderStart() {
+  app.innerHTML = `
+    <div class="screen start">
+      <div class="brand">${LOGO}<h1>Kubskolan</h1></div>
+      <p class="lead">Lär dig lösa Rubiks kub, steg för steg.</p>
+      <div class="start-actions">
+        <a class="btn primary huge" href="#/konto/login">Logga in</a>
+        <a class="btn huge" href="#/konto/register">Registrera dig</a>
+        <button class="btn ghost huge guest">Fortsätt som gäst</button>
+      </div>
+      <p class="guest-note">Som gäst får du lektionerna och Äventyret. Träna, Tidtagning och Spel kräver konto.</p>
+      <p class="guest-note"><a href="#/integritet">Integritet</a></p>
+    </div>`;
+  app.querySelector('.guest').onclick = () => {
+    db.guest = true; save();
+    if (location.hash === '#/' || location.hash === '') route(); else location.hash = '#/';
+  };
+}
+
+// Visas när en gäst öppnar något som kräver konto (även via en direktlänk).
+function renderGate() {
+  app.innerHTML = `
+    <div class="screen center-screen gate">
+      <div class="medal big">${icon('lock')}</div>
+      <h2>Det här kräver ett konto</h2>
+      <p class="muted">Registrera dig gratis för att använda Träna, Tidtagning och Spel.</p>
+      <div class="start-actions">
+        <a class="btn primary" href="#/konto/register">Registrera dig</a>
+        <a class="btn" href="#/konto/login">Logga in</a>
+        <a class="btn ghost" href="#/${me() ? 'map' : ''}">Tillbaka</a>
+      </div>
+    </div>`;
+}
+
 function renderProfiles() {
   app.innerHTML = `
     <div class="screen profiles">
       <div class="brand">${LOGO}<h1>Kubskolan</h1></div>
       <p class="lead">Vem ska kuba idag?</p>
       <div class="profile-grid">
-        ${db.profiles.map(p => {
+        ${realProfiles().map(p => {
           const done = WORLDS.filter(w => p.lessons[w.id]).length;
           return `
           <button class="profile-card" data-id="${p.id}">
@@ -360,14 +474,29 @@ function renderProfiles() {
             <span class="pmeta">${done} av ${WORLDS.length} steg</span>
           </button>`;
         }).join('')}
+        ${accountEmail() ? '' : `<button class="profile-card" data-id="guest">
+          ${avatar('s0c0', 'Gäst', '', 'lg')}
+          <span class="pname">Gäst</span>
+          <span class="pmeta">Utan profil</span>
+        </button>`}
         <button class="profile-card add" data-id="new">
           <span class="add-circle">${icon('plus')}</span>
           <span class="pname">Ny kubare</span>
         </button>
       </div>
+      ${accountEmail()
+        ? `<a class="acct-link" href="#/konto">${icon('users')} Konto</a>`
+        : `<div class="guest-banner">
+            <p><b>Du är gäst.</b> Registrera dig för Träna, Tidtagning och Spel.</p>
+            <div class="row">
+              <a class="btn small ghost" href="#/konto/login">Logga in</a>
+              <a class="btn small primary" href="#/konto/register">Registrera dig</a>
+            </div>
+          </div>`}
     </div>`;
   app.querySelectorAll('.profile-card').forEach(b => b.onclick = () => {
     if (b.dataset.id === 'new') return newProfileDialog();
+    if (b.dataset.id === 'guest') { ensureGuest(); location.hash = '#/map'; return; }
     db.current = b.dataset.id; save();
     location.hash = '#/map';
   });
@@ -448,11 +577,17 @@ function askUnlockCode(msg) {
   const input = wrap.querySelector('.gate');
   const check = () => {
     wrap.remove();
-    if (input.value.trim() === UNLOCK_CODE) { db.unlockAll = true; save(); renderMap(); }
+    if (input.value.trim() === UNLOCK_CODE) { db.unlockAll = true; save(); route(); }
     else askUnlockCode('Fel kod. Försök igen.');
   };
   input.onkeydown = e => { if (e.key === 'Enter') check(); };
   input.focus();
+}
+
+// Klara lektioner startar om från början, påbörjade fortsätter där man var.
+function openLesson(p, w) {
+  const at = p.lessons[w.id] ? 0 : (p.stepAt[w.id] || 0);
+  location.hash = `#/lesson/${w.id}/${at}`;
 }
 
 // Stegen på kartan ligger under knappen "Äventyret". Stängd från start; förblir öppen medan appen är igång.
@@ -460,25 +595,38 @@ let adventureOpen = false;
 
 function renderMap() {
   const p = me();
+  const lockTxt = accountEmail() ? '' : 'Kräver konto'; // gäster ser flikarna men kommer inte in
+  const lockCls = lockTxt ? 'locked' : '';
   const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
   const current = WORLDS.findIndex((w, i) => isUnlocked(p, i) && !p.lessons[w.id]);
 
   app.innerHTML = `
     <div class="screen map">
       <header class="map-head">
-        <a class="who" href="#/" aria-label="Byt kubare">${pAvatar(p, 'md')}</a>
+        ${p.guest && !realProfiles().length
+          ? `<span class="who">${pAvatar(p, 'md')}</span>` // gästen har ingen annan kubare att byta till
+          : `<a class="who" href="#/" aria-label="Byt kubare">${pAvatar(p, 'md')}</a>`}
         <div>
           <h1>Hej ${esc(p.name)}!</h1>
           <p class="sub">${doneCount === WORLDS.length ? 'Du har klarat alla steg.' : `${doneCount} av ${WORLDS.length} steg klara`}</p>
         </div>
         <div class="head-actions">
           ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="Lås upp alla steg">${icon('lock')}</button>`}
-          <a class="icon-btn" href="#/overview" aria-label="Översikt">${icon('chart')}</a>
+          <a class="icon-btn ${lockCls}" href="#/overview" aria-label="Översikt${lockTxt ? ' (kräver konto)' : ''}">${icon('chart')}</a>
         </div>
       </header>
+      ${accountEmail() ? '' : `<div class="guest-banner map-banner">
+        <p><b>Du är gäst.</b> Registrera dig för att spara dina framsteg och få Träna, Tidtagning och Spel.</p>
+        <div class="row">
+          <a class="btn small ghost" href="#/konto/login">Logga in</a>
+          <a class="btn small primary" href="#/konto/register">Registrera dig</a>
+        </div>
+      </div>`}
       <div class="tiles">
-        <a class="tile" href="#/train"><span class="tile-ic">${icon('target')}</span><b>Träna</b><small>Algoritmer</small></a>
-        <a class="tile alt" href="#/timer"><span class="tile-ic">${icon('timer')}</span><b>Tidtagning</b><small>Hur snabb är du?</small></a>
+        <a class="tile lessons" href="#/lessons"><span class="tile-ic">${icon('book')}</span><b>Lektioner</b><small>Välj lektion</small></a>
+        <a class="tile ${lockCls}" href="#/train"><span class="tile-ic">${icon('target')}</span><b>Träna</b><small>${lockTxt || 'Algoritmer'}</small></a>
+        <a class="tile alt ${lockCls}" href="#/timer"><span class="tile-ic">${icon('timer')}</span><b>Tidtagning</b><small>${lockTxt || 'Hur snabb är du?'}</small></a>
+        <a class="tile games ${lockCls}" href="#/games"><span class="tile-ic">${icon('gamepad')}</span><b>Spel</b><small>${lockTxt || 'Kubormen och Kubfall'}</small></a>
       </div>
       <button class="adventure-btn ${adventureOpen ? 'open' : ''}" aria-expanded="${adventureOpen}">
         <span class="tile-ic">${icon('flag')}</span>
@@ -520,11 +668,7 @@ function renderMap() {
   const unlockBtn = app.querySelector('.unlock-btn');
   if (unlockBtn) unlockBtn.onclick = () => askUnlockCode('');
 
-  app.querySelectorAll('.node').forEach(b => b.onclick = () => {
-    const w = WORLDS[+b.dataset.i];
-    const at = p.lessons[w.id] ? 0 : (p.stepAt[w.id] || 0);
-    location.hash = `#/lesson/${w.id}/${at}`;
-  });
+  app.querySelectorAll('.node').forEach(b => b.onclick = () => openLesson(p, WORLDS[+b.dataset.i]));
 
   // Rita den slingrande stigen mellan stegen
   const wrap = app.querySelector('.path-wrap');
@@ -547,6 +691,51 @@ function renderMap() {
   const ro = new ResizeObserver(drawPath);
   ro.observe(wrap);
   cleanups.push(() => ro.disconnect());
+}
+
+// ---------- Lektioner (lista) ----------
+
+function renderLessons() {
+  const p = me();
+  const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
+  const current = WORLDS.findIndex((w, i) => isUnlocked(p, i) && !p.lessons[w.id]);
+
+  const card = (w, i) => {
+    const open = isUnlocked(p, i);
+    const done = !!p.lessons[w.id];
+    const resume = !done && (p.stepAt[w.id] || 0) > 0;
+    const status = done ? starsHtml(stars(p, w))
+      : !open ? `<span class="lc-status">${icon('lock')} Låst</span>`
+      : `<span class="lc-status go">${resume ? 'Fortsätt' : 'Börja'} ${icon('next')}</span>`;
+    return `
+      <li class="lesson-card ${open ? '' : 'locked'} ${done ? 'done' : ''} ${i === current ? 'current' : ''}">
+        <button class="lc-main" data-i="${i}" ${open ? '' : 'disabled'}>
+          <span class="lc-ic">${open ? glyph(w.id) : icon('lock')}</span>
+          <span class="lc-txt">
+            <span class="stop-num">Steg ${i}</span>
+            <b>${esc(w.title)}</b>
+            <small>${open ? esc(w.short) : 'Klara föregående steg först'}</small>
+          </span>
+          ${status}
+        </button>
+        ${open && done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} Frågor</a>` : ''}
+      </li>`;
+  };
+
+  app.innerHTML = `
+    <div class="screen lessons-screen">
+      ${topbar({ back: '#/map', middle: `<span class="topbar-title">${icon('book')} Lektioner</span>`, right: pAvatar(p, 'sm') })}
+      <div class="lessons-sum">
+        <span>${doneCount} av ${WORLDS.length} lektioner klara</span>
+        ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="Lås upp alla steg">${icon('lock')}</button>`}
+      </div>
+      <div class="progress" role="progressbar" aria-valuenow="${doneCount}" aria-valuemax="${WORLDS.length}"><span style="width:${(doneCount / WORLDS.length) * 100}%"></span></div>
+      <ol class="lesson-list">${WORLDS.map(card).join('')}</ol>
+    </div>`;
+
+  app.querySelectorAll('.lc-main').forEach(b => b.onclick = () => openLesson(p, WORLDS[+b.dataset.i]));
+  const unlockBtn = app.querySelector('.unlock-btn');
+  if (unlockBtn) unlockBtn.onclick = () => askUnlockCode('');
 }
 
 // ---------- Lektion ----------
@@ -1021,6 +1210,7 @@ function renderOverview() {
     modal(`<h2>Nollställa ${esc(p.name)}?</h2><p class="muted">Alla stjärnor och tider försvinner.</p>`,
       [['Avbryt', null, 'ghost'], ['Nollställ', () => {
         Object.assign(p, newProfile(p.name, p.avatar), { id: p.id });
+        if (p.cloudId) p.replaceCloud = true; // molnets kopia ska också nollställas, inte slås ihop
         save(); renderOverview();
       }, 'danger']]);
   });
@@ -1029,10 +1219,260 @@ function renderOverview() {
     modal(`<h2>Ta bort ${esc(p.name)}?</h2><p class="muted">Profilen och alla framsteg försvinner.</p>`,
       [['Avbryt', null, 'ghost'], ['Ta bort', () => {
         db.profiles = db.profiles.filter(x => x.id !== p.id);
+        if (p.cloudId) (db.pendingDeletes = db.pendingDeletes || []).push(p.cloudId); // tas bort i molnet vid nästa synk
         if (db.current === p.id) db.current = null;
         save(); location.hash = '#/';
       }, 'danger']]);
   });
+}
+
+// ---------- Konto (vårdnadshavare) ----------
+
+const PRIVACY_CONTACT = ''; // e-post för frågor om personuppgifter; raden döljs om den är tom
+
+function privacyHtml() {
+  return `<div class="legal">
+    <h2>Integritet</h2>
+    <p>Kubskolan är till för att lära sig lösa Rubiks kub. Vi sparar så lite som möjligt.</p>
+    <h3>Utan konto</h3>
+    <p>Allt (profiler, framsteg, tider) sparas bara på din egen enhet. Inget skickas till oss.</p>
+    <h3>Med konto</h3>
+    <ul>
+      <li><b>Vårdnadshavarens e-post</b>, för att kunna logga in med en engångskod.</li>
+      <li><b>Profiler</b>: smeknamn och figur eller färg. Barn behöver ingen e-post. Foton du väljer som profilbild stannar på enheten och sparas aldrig hos oss.</li>
+      <li><b>Framsteg</b>: klarade steg, svar på snabbfrågor, nivå på algoritmer och tidtagningar.</li>
+      <li><b>Samtycke</b>: när vårdnadshavaren godkände den här texten.</li>
+    </ul>
+    <h3>Topplistan</h3>
+    <p>En profil syns bara på topplistan om vårdnadshavaren slår på det. Då visas smeknamn, figur och poäng, inget annat. Välj smeknamn som inte avslöjar vem barnet är.</p>
+    <h3>Var och hur länge</h3>
+    <p>Uppgifterna lagras hos Supabase i EU (Paris) och används bara för att spara framsteg och visa topplistan. De sparas tills du tar bort kontot. Då raderas kontot, alla profiler och allt som hör till dem. Det gör du under Konto i appen.</p>
+    <h3>Statistik</h3>
+    <p>Vi räknar besök med GoatCounter. Det använder inga cookies och sparar inga personuppgifter.</p>
+    <h3>Dina rättigheter</h3>
+    <p>Du kan begära att få veta vad vi sparar, få fel rättade och få allt raderat. Du kan också klaga hos Integritetsskyddsmyndigheten (IMY).${PRIVACY_CONTACT ? ` Kontakt: ${esc(PRIVACY_CONTACT)}.` : ''}</p>
+    <h3>Barn</h3>
+    <p>Konton är till för vårdnadshavare. Barn under 18 ska inte skapa konto själva.</p>
+  </div>`;
+}
+
+function renderPrivacy() {
+  app.innerHTML = `
+    <div class="screen account">
+      ${topbar({ back: '#/', middle: `<span class="topbar-title">${icon('users')} Integritet</span>` })}
+      <div class="panel acct-card">${privacyHtml()}</div>
+    </div>`;
+}
+
+// Ögonknapp som visar eller döljer ett lösenord.
+function wireEye(input, eye) {
+  eye.onclick = () => {
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    eye.innerHTML = icon(show ? 'eyeOff' : 'eye');
+    eye.setAttribute('aria-label', show ? 'Dölj lösenord' : 'Visa lösenord');
+  };
+}
+
+function renderAccount(mode) {
+  const register = mode === 'register'; // annars logga in
+  let email = '';
+  const shell = body => {
+    app.innerHTML = `
+      <div class="screen account">
+        ${topbar({ back: '#/', middle: `<span class="topbar-title">${icon('users')} Konto</span>` })}
+        <div class="panel acct-card">${body}<p class="msg" aria-live="polite"></p></div>
+      </div>`;
+  };
+  const say = (text, bad = true) => {
+    const m = app.querySelector('.msg');
+    m.textContent = text;
+    m.className = 'msg' + (bad ? ' err' : '');
+  };
+  // Fel utan status betyder att ingen kontakt fick till stånd med servern.
+  const failText = (e, fallback) => !e.status ? 'Ingen uppkoppling. Försök igen när du är online.'
+    : e.status === 429 ? 'Vänta en stund innan du försöker igen.' : fallback;
+  const busy = (btn, on) => { btn.disabled = on; };
+  let tab = 'password'; // logga in med lösenord (standard) eller kod
+
+  // Gemensamt slut på alla inloggningar: erbjud gästens framsteg, starta synk och gå till kubarna.
+  const finish = async () => {
+    await offerGuestSave();
+    if (sync) sync.schedule(500);
+    location.hash = '#/';
+  };
+
+  // Frivilligt lösenord, efter registrering eller via Konto. Man kan alltid logga in med kod i stället.
+  const drawPassword = afterRegister => {
+    shell(`
+      <h2>${afterRegister ? 'Skapa ett lösenord?' : 'Lösenord'}</h2>
+      <p class="muted">${afterRegister ? 'Då loggar du in snabbare nästa gång. Du kan alltid använda en kod i stället.' : 'Välj ett lösenord på minst 8 tecken.'}</p>
+      <div class="pw-row">
+        <input class="field pw" type="password" autocomplete="new-password" placeholder="Nytt lösenord">
+        <button class="icon-btn pw-eye" aria-label="Visa lösenord">${icon('eye')}</button>
+      </div>
+      <button class="btn primary save">${icon('check')} Spara lösenord</button>
+      <button class="btn ghost skip">${afterRegister ? 'Hoppa över' : 'Avbryt'}</button>`);
+    const input = app.querySelector('.pw'), save = app.querySelector('.save');
+    wireEye(input, app.querySelector('.pw-eye'));
+    const submit = async () => {
+      if (input.value.length < 8) return say('Lösenordet behöver vara minst 8 tecken.');
+      busy(save, true);
+      try {
+        await setPassword(input.value);
+      } catch (e) {
+        busy(save, false);
+        return say(e.status === 422 ? 'Lösenordet godtogs inte. Välj ett annat, minst 8 tecken.' : failText(e, 'Det gick inte att spara lösenordet. Försök igen.'));
+      }
+      if (afterRegister) await finish(); else { drawIn(); say('Lösenordet är sparat.', false); }
+    };
+    save.onclick = submit;
+    input.onkeydown = e => { if (e.key === 'Enter') submit(); };
+    app.querySelector('.skip').onclick = () => (afterRegister ? finish() : drawIn());
+    setTimeout(() => input.focus(), 50);
+  };
+
+  const drawIn = () => {
+    shell(`
+      <h2>Inloggad</h2>
+      <p class="muted acct-mail">${esc(accountEmail())}</p>
+      <p class="muted small">Profiler och framsteg sparas i ditt konto och följer med mellan enheter. Appen fungerar även utan nät.</p>
+      <p class="sync-state small" aria-live="polite"></p>
+      <div class="row">
+        <button class="btn ghost small syncnow">${icon('restart')} Synka nu</button>
+        <button class="btn ghost small pwbtn">${icon('lock')} Lösenord</button>
+        <button class="btn ghost small out">Logga ut</button>
+        <button class="btn ghost small del">${icon('trash')} Ta bort konto</button>
+      </div>
+      <p class="small"><a href="#/integritet">Läs integritetstexten</a></p>`);
+    const showSync = () => {
+      const el = app.querySelector('.sync-state');
+      if (!el) return; // man har lämnat skärmen
+      const st = sync.status;
+      el.textContent = st.busy ? 'Synkar …' : st.error ? st.error
+        : st.last ? `Senast synkad ${new Date(st.last).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}` : '';
+      el.className = 'sync-state small' + (st.error && !st.busy ? ' err' : '');
+    };
+    showSync();
+    app.querySelector('.syncnow').onclick = async () => {
+      const done = sync.syncNow();
+      showSync();
+      await done;
+      showSync();
+    };
+    app.querySelector('.pwbtn').onclick = () => drawPassword(false);
+    app.querySelector('.out').onclick = async () => { await signOut(); db.guest = false; save(); location.hash = '#/start'; };
+    app.querySelector('.del').onclick = () => modal(
+      `<h2>Ta bort kontot?</h2><p class="muted">Kontot, alla profiler och allt som sparats hos oss raderas för alltid. Det som finns på den här enheten påverkas inte.</p>`,
+      [['Avbryt', null, 'ghost'], ['Ta bort', async () => {
+        try { await deleteAccount(); db.guest = false; save(); location.hash = '#/start'; }
+        catch (e) { say(failText(e, 'Det gick inte att ta bort kontot. Försök igen.')); }
+      }, 'danger']]);
+  };
+
+  const drawCode = () => {
+    shell(`
+      <h2>Skriv koden</h2>
+      <p class="muted">Vi har skickat en kod till <b>${esc(email)}</b>. Titta i skräpposten om den inte kommer.</p>
+      <input class="field code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Kod">
+      <button class="btn primary go">${icon('check')} Logga in</button>
+      <div class="row">
+        <button class="btn ghost small again">Skicka ny kod</button>
+        <button class="btn ghost small other">Fel e-post?</button>
+      </div>`);
+    const input = app.querySelector('.code'), go = app.querySelector('.go');
+    const submit = async () => {
+      const code = input.value.replace(/\D/g, '');
+      if (code.length < 6) return say('Skriv hela koden från mejlet.');
+      busy(go, true);
+      try {
+        await verifyCode(email, code);
+      } catch (e) {
+        busy(go, false);
+        return say(failText(e, 'Koden stämde inte eller har gått ut. Be om en ny.'));
+      }
+      if (register) {
+        try {
+          await recordConsent();
+        } catch (e) {
+          await signOut();
+          busy(go, false);
+          return say(failText(e, 'Något gick fel när vi sparade ditt godkännande. Försök igen.'));
+        }
+      }
+      if (register) return drawPassword(true);
+      await finish();
+    };
+    go.onclick = submit;
+    input.onkeydown = e => { if (e.key === 'Enter') submit(); };
+    app.querySelector('.again').onclick = async e => {
+      busy(e.currentTarget, true);
+      try { await sendCode(email, register); say('En ny kod är skickad.', false); }
+      catch (err) { say(failText(err, 'Det gick inte att skicka en ny kod.')); }
+      setTimeout(() => busy(e.currentTarget, false), 4000);
+    };
+    app.querySelector('.other').onclick = drawEmail;
+    setTimeout(() => input.focus(), 50);
+  };
+
+  const drawEmail = () => {
+    const usePw = !register && tab === 'password';
+    shell(`
+      <h2>${register ? 'Registrera dig' : 'Logga in'}</h2>
+      ${register ? '' : `<div class="tabs" role="tablist">
+        <button class="tab ${usePw ? 'on' : ''}" data-t="password" role="tab">Lösenord</button>
+        <button class="tab ${usePw ? '' : 'on'}" data-t="code" role="tab">Kod</button>
+      </div>`}
+      <p class="muted">${register ? 'För vårdnadshavare. Vi skickar en kod till din e-post, så behövs inget lösenord.'
+        : usePw ? 'Logga in med e-post och lösenord.' : 'Vi skickar en kod till din e-post. Inget lösenord behövs.'}</p>
+      <input class="field mail" type="email" inputmode="email" autocomplete="email" placeholder="din@epost.se" value="${esc(email)}">
+      ${usePw ? `<div class="pw-row">
+        <input class="field pw" type="password" autocomplete="current-password" placeholder="Lösenord">
+        <button class="icon-btn pw-eye" aria-label="Visa lösenord">${icon('eye')}</button>
+      </div>` : ''}
+      ${register ? `<label class="check"><input type="checkbox" class="agree"><span>Jag är vuxen och vårdnadshavare och godkänner <a href="#/integritet" class="legal-link">integritetstexten</a>.</span></label>` : ''}
+      <button class="btn primary send">${usePw ? 'Logga in' : 'Skicka kod'} ${icon('next')}</button>
+      ${usePw ? '<p class="small switch-mode"><button class="linkbtn forgot">Glömt lösenordet, eller har inget än? Logga in med kod</button></p>' : ''}
+      <p class="small switch-mode">${register ? 'Har du redan ett konto? <a href="#/konto/login">Logga in</a>' : 'Ny här? <a href="#/konto/register">Registrera dig</a>'}</p>`);
+    const input = app.querySelector('.mail'), agree = app.querySelector('.agree'), send = app.querySelector('.send');
+    const pw = app.querySelector('.pw');
+    if (pw) wireEye(pw, app.querySelector('.pw-eye'));
+    // Byt flik utan att tappa det man skrivit
+    const switchTab = t => { email = input.value.trim(); tab = t; drawEmail(); };
+    app.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.t));
+    const forgot = app.querySelector('.forgot');
+    if (forgot) forgot.onclick = () => switchTab('code');
+    // Texten öppnas i en ruta så att det man skrivit inte försvinner
+    const legal = app.querySelector('.legal-link');
+    if (legal) legal.onclick = e => {
+      e.preventDefault();
+      modal(privacyHtml(), [['Stäng', null, 'primary']]);
+    };
+    const submit = async () => {
+      const value = input.value.trim();
+      if (!/^\S+@\S+\.\S+$/.test(value)) return say('Skriv en giltig e-postadress.');
+      if (register && !agree.checked) return say('Du behöver godkänna integritetstexten för att fortsätta.');
+      if (usePw) {
+        if (!pw.value) return say('Skriv ditt lösenord.');
+        busy(send, true);
+        try { await signInWithPassword(value, pw.value); }
+        catch (e) { busy(send, false); return say(failText(e, 'Fel e-post eller lösenord. Du kan också logga in med kod.')); }
+        return finish();
+      }
+      busy(send, true);
+      try { await sendCode(value, register); email = value; drawCode(); }
+      catch (e) {
+        busy(send, false);
+        say(failText(e, register ? 'Det gick inte att skicka koden. Kontrollera adressen och försök igen.'
+          : 'Vi hittar inget konto med den adressen. Är du ny? Tryck på Registrera dig nedan.'));
+      }
+    };
+    send.onclick = submit;
+    input.onkeydown = e => { if (e.key === 'Enter') submit(); };
+    if (pw) pw.onkeydown = e => { if (e.key === 'Enter') submit(); };
+  };
+
+  if (accountEmail()) drawIn(); else drawEmail();
 }
 
 // ---------- Start ----------
@@ -1066,3 +1506,9 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 }
 if (window.speechSynthesis) speechSynthesis.getVoices();
 route();
+
+// Synka när appen öppnas, kommer fram igen eller får nät.
+const syncSoon = () => { if (accountEmail()) sync.schedule(1500); };
+syncSoon();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncSoon(); });
+window.addEventListener('online', syncSoon);
