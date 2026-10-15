@@ -150,7 +150,7 @@ export function createSync({ getDb, persist, summary, onChange, api = realApi })
       } while (again);
       status.last = Date.now(); status.error = null;
     } catch (e) {
-      status.error = e && e.status ? 'Synken misslyckades. Försök igen strax.' : 'Ingen uppkoppling just nu.';
+      status.error = e && e.status ? 'failed' : 'offline'; // koder; appen översätter
       if (!(await getSession())) onChange(); // inloggningen gäller inte längre: låt skärmen visa det
     } finally {
       running = false; status.busy = false;

@@ -1,6 +1,6 @@
-# Kubskolan
+# Kubskolan / Cube School
 
-A Swedish web app that teaches anyone, young or old, to solve the Rubik's cube with CFOP, step by step — playful and visual.
+A Swedish and English web app that teaches anyone, young or old, to solve the Rubik's cube with CFOP, step by step — playful and visual.
 Plain HTML/CSS/JS with no build step and no dependencies. Works offline once loaded, and can be installed on an iPad or phone home screen.
 
 ## Run locally (PC)
@@ -57,11 +57,15 @@ Progress is stored per device in the browser (localStorage). Each person gets th
 | File | What |
 |---|---|
 | `js/content.js` | All lessons, texts and algorithms (edit here to change content) |
+| `js/content.en.js` | English lesson texts (Cube School), laid over `content.js` by position — keep the order in sync |
+| `js/i18n.js` | Language choice (SV/EN switch in the header, saved per device, defaults to the browser language) |
 | `js/cube.js` | 3D cube: model, CSS-3D rendering, animation, notation parser |
-| `js/app.js` | Screens: profiles, map, lessons, quiz, trainer, timer, overview |
+| `js/app.js` | Screens: profiles, map, lessons, quiz, trainer, timer, overview. UI texts in both languages are in `UI` at the top |
 | `css/style.css` | Styling |
 | `sw.js` | Offline cache — bump `VERSION` when you deploy changes |
 | `tools/make-icons.ps1` | Regenerates the PNG icons |
+| `tools/handbook/` + `tools/make-handbook.js` | Printable gift handbook (beginner's method, A5, 16 pages) in Swedish and English. Rebuild the PDFs in `handbok/` with `NODE_PATH=$(npm root -g) node tools/make-handbook.js` (needs Node + Playwright). The cube pictures are drawn by `js/cube.js`, so they always match the algorithms |
+| `handbok/` | The finished PDFs, linked from the map screen |
 | `kubskolanplattform/` | Clickable prototype and concept for Kubskolan as a wider platform (served at `/kubskolanplattform/`). Reuses `js/cube.js` and `js/icons.js` |
 
 ## Curriculum

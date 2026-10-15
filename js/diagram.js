@@ -1,5 +1,6 @@
 // Bild av toppen sett ovanifrån (toppens 9 rutor + kantremsor runt om), räknad ur kubmodellen.
 // Pilar visar vart bitarna i toppen ska flytta.
+import { lang } from './i18n.js';
 import { CubeView, parseAlg, invertAlg, COLORS, MASKS } from './cube.js';
 
 const GRAY = '#4F5E57';
@@ -71,7 +72,7 @@ export function topView(cfg) {
     }
   }
 
-  return `<svg class="topview" viewBox="0 0 ${full} ${full}" role="img" aria-label="Toppen sett ovanifrån">
+  return `<svg class="topview" viewBox="0 0 ${full} ${full}" role="img" aria-label="${lang === 'en' ? 'The top seen from above' : 'Toppen sett ovanifrån'}">
     <defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#0B2219"/></marker></defs>
     ${svg}</svg>`;
 }
