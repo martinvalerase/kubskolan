@@ -120,7 +120,7 @@ Object.assign(UI.sv, {
   noAccount: 'Vi hittar inget konto med den adressen. Är du ny? Tryck på Registrera dig nedan.',
   sendFail: 'Det gick inte att skicka koden. Kontrollera adressen och försök igen.',
   noNet: 'Ingen uppkoppling. Försök igen när du är online.', waitAWhile: 'Vänta en stund innan du försöker igen.',
-  trackPick: 'Välj metod', trackBeg: 'Nybörjarmetoden', trackCfop: 'CFOP',
+  trackPick: 'Välj metod', trackBeg: 'Nybörjarmetoden', trackCfop: 'Avancerad (CFOP)',
   trackBegSub: n => `${n} lektioner. Lager för lager, enklast att börja med.`,
   trackCfopSub: n => `${n} lektioner. Den snabbare metoden som tävlingskubare använder.`,
   lessonsDone: (d, n) => `${d} av ${n} lektioner klara`, continue: 'Fortsätt', begin: 'Börja',
@@ -160,7 +160,7 @@ Object.assign(UI.en, {
   noAccount: "We can't find an account with that address. New here? Tap Sign up below.",
   sendFail: "Couldn't send the code. Check the address and try again.",
   noNet: 'No connection. Try again when you are online.', waitAWhile: 'Wait a moment before trying again.',
-  trackPick: 'Choose a method', trackBeg: 'Beginner method', trackCfop: 'CFOP',
+  trackPick: 'Choose a method', trackBeg: 'Beginner method', trackCfop: 'Advanced (CFOP)',
   trackBegSub: n => `${n} lessons. Layer by layer, the easiest way to start.`,
   trackCfopSub: n => `${n} lessons. The faster method competition cubers use.`,
   lessonsDone: (d, n) => `${d} of ${n} lessons done`, continue: 'Continue', begin: 'Start',
@@ -245,8 +245,8 @@ function offerGuestSave() {
 
 // ---------- Progress ----------
 
-// Lektionsspåret: nybörjarmetoden eller CFOP. Valet sparas på enheten (db.track); CFOP är standard.
-const trackId = () => (db.track === 'beg' ? 'beg' : 'cfop');
+// Lektionsspåret: nybörjarmetoden eller CFOP. Valet sparas på enheten (db.track); nybörjarmetoden är förvald.
+const trackId = () => (db.track === 'cfop' ? 'cfop' : 'beg');
 const trackWorlds = () => TRACKS.find(t => t.id === trackId()).worlds.map(id => WORLDS.find(w => w.id === id));
 // Stegets nummer i det valda spåret, annars i det andra
 const stepNo = id => {
