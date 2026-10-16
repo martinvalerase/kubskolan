@@ -24,6 +24,18 @@ const YPERM_PARTS = [{ name: 'Start', alg: "F R U' R' U' R U R' F'" }, { name: '
 const UA = "R U' R U R U R U' R' U' R2";
 const UA_PARTS = [{ name: 'Start', alg: "R U'" }, { name: 'Snurra', alg: "R U R U R U'" }, { name: 'Slut', alg: "R' U' R2" }];
 const UB_PARTS = [{ name: 'Start', alg: 'R2 U' }, { name: 'Snurra', alg: "R U R' U' R' U'" }, { name: 'Slut', alg: "R' U R'" }];
+// Nybörjarmetodens sista våning (verifierade mot kubmodellen):
+// EDGES_ALG byter de två främre-vänstra kanterna (de två andra står kvar), CPOS växlar tre hörn och lämnar främre-högra,
+// TWIST vrider ett hörn när det upprepas. conjU kör en algoritm "från ett annat håll" genom att kringgå med U-vridningar.
+const TWIST = "R' D' R D";
+const TWISTS_ALL = [TWIST, TWIST, 'U', TWIST, TWIST, TWIST, TWIST, "U'"].join(' ');
+const conjU = (alg, k) => (k ? `${['', 'U', 'U2', "U'"][k]} ${alg} ${['', "U'", 'U2', 'U'][k]}` : alg);
+const EDGES_ALG = SUNE + ' U';
+const EDGES_PARTS = [{ name: 'Första halvan', alg: "R U R'" }, { name: 'Andra halvan', alg: "U R U2 R'" }, { name: 'Vrid toppen', alg: 'U' }];
+const EDGES_OPPOSITE = [conjU(EDGES_ALG, 1), conjU(EDGES_ALG, 2), conjU(EDGES_ALG, 1)].join(' '); // bara kanterna vänster och höger matchar
+const CPOS = "U R U' L' U R' U' L";
+const CPOS_PARTS = [{ name: 'Första halvan', alg: "U R U' L'" }, { name: 'Andra halvan', alg: "U R' U' L" }];
+const CORNERS_NONE = `${CPOS} ${conjU(CPOS, 1)}`; // inget hörn sitter rätt
 const sw = face => `<i class="sw sw-${face}"></i>`; // liten färgruta i texten
 const dances = n => Array.from({ length: n }, (_, k) => ({ name: `Dans ${k + 1}`, alg: DANCE }));
 
@@ -674,15 +686,165 @@ const WORLDS_SV = [
       { id: 'f2l_10', name: 'Vitt uppåt, kanten fram', alg: "F' U2 F U F' U' F", mask: 'f2l' },
     ],
   },
+  {
+    id: 'b6',
+    title: 'Gula kanterna på plats',
+    short: 'Nybörjarmetoden: kanterna matchar mitten',
+    quiz: [
+      { q: 'Vad ska de gula kanterna matcha med?', options: ['Mitten på sidan', 'Hörnen', 'Den gula mitten'] },
+      { q: 'Två kanter bredvid varandra matchar. Var håller du dem?', options: ['Bak och till höger', 'Fram och till vänster', 'Uppe och nere'], diagram: { setupInv: EDGES_ALG, mask: 'llEdges' } },
+      { q: 'Ingen kant matchar. Vad gör du?', options: ['Algoritmen en gång och tittar igen', 'Börjar om från början', 'Vrider hela kuben'] },
+    ],
+    steps: [
+      {
+        recap: true,
+        title: 'Det gula korset',
+        text: 'Toppen har ett gult kors. Nu ska varje gul kant också ha <b>samma färg som mitten</b> på sidan under.',
+        cube: { setupInv: EDGES_ALG, mask: 'ollCross' },
+      },
+      {
+        title: 'Matcha med mitten',
+        text: 'Titta på sidorna av översta våningen. Vrid toppen (U) tills så många kanter som möjligt har <b>samma färg som mitten under</b>.<br><br>Matchar alla fyra? Då är det här steget klart!',
+        rule: 'Vrid toppen tills så många kanter som möjligt matchar.',
+        diagram: { setupInv: EDGES_ALG, mask: 'llEdges', label: 'Två matchar' },
+        cube: { setupInv: EDGES_ALG, mask: 'llEdges' },
+      },
+      {
+        title: 'Två kanter bredvid varandra',
+        text: 'Matchar två kanter som <b>ligger bredvid varandra</b>, som ett L? Håll dem <b>bak och till höger</b>, precis som på bilden. Gör sedan algoritmen. Då byter de två andra kanterna plats.',
+        rule: 'De rätta kanterna bak och till höger.',
+        diagram: { setupInv: EDGES_ALG, mask: 'llEdges' },
+        cube: { setupInv: EDGES_ALG, parts: EDGES_PARTS, mask: 'llEdges' },
+      },
+      {
+        title: 'Annars: gör den en gång',
+        text: 'Matchar ingen kant, eller bara två som är <b>mitt emot</b> varandra? Håll kuben som vanligt och gör algoritmen <b>en gång</b>. Vrid sedan toppen och titta igen. Nu matchar kanterna på ett nytt sätt!<br><br>Upprepa tills alla fyra matchar. Det brukar ta en eller två gånger.',
+        diagram: { setup: EDGES_OPPOSITE, mask: 'llEdges', label: 'Två mitt emot' },
+        cube: { setup: EDGES_OPPOSITE, parts: [{ name: 'En gång', alg: EDGES_ALG }], mask: 'llEdges' },
+      },
+      {
+        title: 'Din tur!',
+        text: 'Få alla fyra gula kanter att matcha mitten på din kub.',
+        practice: true,
+        help: [
+          ['Jag vet inte vilka kanter som matchar', 1],
+          ['Två kanter bredvid varandra matchar', 2],
+          ['Ingen kant matchar, eller två mitt emot varandra', 3],
+          ['Algoritmen är Sune och ett extra U: R U R\' U R U2 R\' U. Gör den långsamt.', null],
+        ],
+      },
+    ],
+    cases: [
+      { id: 'beg_edges', name: 'Gula kanterna (Sune)', alg: EDGES_ALG, mask: 'llEdges' },
+    ],
+  },
+  {
+    id: 'b7',
+    title: 'Gula hörnen på plats',
+    short: 'Nybörjarmetoden: hörnen på rätt plats',
+    quiz: [
+      { q: 'Var håller du det hörn som redan sitter rätt?', options: ['Uppe fram till höger', 'Bak till vänster', 'Nere till höger'] },
+      { q: 'Vad gör algoritmen med de andra hörnen?', options: ['De byter plats', 'De vrids på plats', 'Ingenting'] },
+      { q: 'Inget hörn sitter rätt. Vad gör du?', options: ['Algoritmen en gång, från vilket håll som helst', 'Börjar om från början', 'Vrider kanterna'] },
+    ],
+    steps: [
+      {
+        recap: true,
+        title: 'Kanterna matchar',
+        text: 'Alla fyra kanter i toppen matchar mitten. Nu ska hörnen också hamna på rätt plats. De får sitta vridna fel just nu.',
+        cube: { setupInv: CPOS, mask: 'llEdges' },
+      },
+      {
+        title: 'Vilken plats hör hörnet till?',
+        text: 'Ett hörn hör hemma mellan sina <b>tre färger</b>. Titta på hörnets färger på sidorna. Om de är samma som kanternas färger bredvid, sitter hörnet på <b>rätt plats</b>, även om det gula pekar åt fel håll.',
+        diagram: { setupInv: CPOS, mask: 'full', label: 'Ett hörn sitter rätt' },
+        cube: { setupInv: CPOS, highlight: ['UFR'] },
+      },
+      {
+        title: 'Håll det rätta hörnet fram till höger',
+        text: 'Hitta ett hörn som redan sitter rätt. Håll det <b>uppe fram till höger</b>. Gör sedan algoritmen. Då byter de andra tre hörnen plats.<br><br>Sitter alla rätt nu? Annars gör du den en gång till, med samma hörn framme till höger.',
+        rule: 'Det rätta hörnet fram till höger.',
+        cube: { caseRef: 'beg_cpos', parts: CPOS_PARTS, highlight: ['UFR'] },
+      },
+      {
+        title: 'Inget hörn rätt?',
+        text: 'Sitter inget hörn rätt? Gör algoritmen <b>en gång</b>, från vilket håll som helst. Då hamnar ett hörn rätt. Gör sedan som i förra steget.',
+        diagram: { setup: CORNERS_NONE, label: 'Inget hörn rätt' },
+        cube: { setup: CORNERS_NONE, parts: [{ name: 'En gång', alg: CPOS }] },
+      },
+      {
+        title: 'Din tur!',
+        text: 'Få alla fyra gula hörn på rätt plats på din kub. Det gula får peka åt vilket håll som helst.',
+        practice: true,
+        help: [
+          ['Jag vet inte vilket hörn som sitter rätt', 1],
+          ['Ett hörn sitter rätt', 2],
+          ['Inget hörn sitter rätt', 3],
+          ['Håll alltid det rätta hörnet uppe fram till höger innan du gör algoritmen.', null],
+        ],
+      },
+    ],
+    cases: [
+      { id: 'beg_cpos', name: 'Gula hörnen på plats', alg: CPOS, mask: 'full' },
+    ],
+  },
+  {
+    id: 'b8',
+    title: 'Vrid hörnen',
+    short: 'Nybörjarmetoden: sista steget, kuben löst!',
+    quiz: [
+      { q: 'Hur länge upprepar du R\' D\' R D?', options: ['Tills gult pekar uppåt', 'Alltid sex gånger', 'Tills kuben ser rörig ut'] },
+      { q: 'Vad vrider du för att byta till nästa hörn?', options: ['Bara toppen', 'Hela kuben', 'Högra sidan'] },
+      { q: 'Kuben ser rörig ut mitt i. Vad gör du?', options: ['Fortsätter, det ordnar sig', 'Börjar om från början', 'Slutar'] },
+    ],
+    steps: [
+      {
+        recap: true,
+        title: 'Hörnen sitter rätt',
+        text: 'Alla hörn sitter på rätt plats. Några är fortfarande vridna fel, så att det gula inte pekar uppåt. Nu vrider vi dem rätt.',
+        cube: { setupInv: TWISTS_ALL, mask: 'oll' },
+      },
+      {
+        title: 'Ny dans: R\' D\' R D',
+        text: 'Vi vrider ett hörn i taget med en kort dans: <b>R\' D\' R D</b>. Håll hörnet som ska vridas <b>uppe fram till höger</b>. Gör dansen tills det <b>gula pekar uppåt</b>. Det kan ta två eller fyra gånger.',
+        rule: 'Dansa tills gult pekar uppåt.',
+        cube: { setupInv: `${TWIST} ${TWIST}`, parts: [{ name: 'Dans 1', alg: TWIST }, { name: 'Dans 2', alg: TWIST }], highlight: ['UFR'] },
+      },
+      {
+        title: 'Rörigt? Det ska vara så!',
+        text: 'Medan du dansar ser kuben rörig ut. Oroa dig inte! Vrid <b>bara toppen</b> (U) när du ska byta hörn, aldrig hela kuben. När alla hörn är klara är hela kuben löst.',
+        rule: 'Vrid bara toppen mellan hörnen.',
+        cube: {
+          caseRef: 'beg_twist',
+          parts: [
+            { name: 'Första hörnet: 2 gånger', alg: `${TWIST} ${TWIST}` },
+            { name: 'Vrid toppen', alg: 'U' },
+            { name: 'Andra hörnet: 4 gånger', alg: `${TWIST} ${TWIST} ${TWIST} ${TWIST}` },
+            { name: 'Vrid tillbaka', alg: "U'" },
+          ],
+          highlight: ['UFR'],
+        },
+      },
+      {
+        title: 'Du kan lösa kuben!',
+        text: 'Blanda din kub och lös den från början till slut: prästkrage, kors, vita hörn, mittenvåning, gult kors, gula kanter, gula hörn på plats och vrid hörnen.<br><br>Du har lärt dig nybörjarmetoden!',
+        practice: true,
+        help: [
+          ['Hur vrider jag ett hörn?', 1],
+          ['Kuben ser rörig ut', 2],
+          ['Vrid bara toppen mellan hörnen. När sista hörnet är rätt, vrid toppen så att sidorna matchar.', null],
+        ],
+      },
+    ],
+    cases: [
+      { id: 'beg_twist', name: 'Vrid hörnen', alg: [TWIST, TWIST, 'U', TWIST, TWIST, TWIST, TWIST, "U'"].join(' '), mask: 'oll' },
+    ],
+  },
 ];
 
-// Fall som bara finns i Träna (den renodlade nybörjarmetodens sista våning), inte i lektionerna.
-const TWIST = "R' D' R D";
+// Fall som bara finns i Träna, inte i någon lektion.
 const TRAIN_EXTRA_CASES = [
   { id: 'beg_corner', name: 'Vitt hörn: Dansen', alg: DANCE, mask: 'firstLayer' },
-  { id: 'beg_edges', name: 'Gula kanterna (Sune)', alg: SUNE + ' U', mask: 'llEdges' },
-  { id: 'beg_cpos', name: 'Gula hörnen på plats', alg: "U R U' L' U R' U' L", mask: 'full' },
-  { id: 'beg_twist', name: 'Vrid hörnen', alg: [TWIST, TWIST, 'U', TWIST, TWIST, TWIST, TWIST, "U'"].join(' '), mask: 'oll' },
 ];
 
 const ALL_CASES_SV = [
@@ -702,9 +864,9 @@ const TRAIN_METHODS_SV = [
       { id: 'corners', title: 'Vita hörnen', short: 'Dansen tills hörnet sitter', world: 'w3', cases: ['beg_corner'] },
       { id: 'mid', title: 'Mittenvåningen', short: 'Kanter till höger och vänster', world: 'w4', cases: ['mid_right', 'mid_left'] },
       G_CROSS,
-      { id: 'edges', title: 'Gula kanterna', short: 'Sune flyttar kanterna', cases: ['beg_edges'] },
-      { id: 'cpos', title: 'Gula hörnen på plats', short: 'Rätt hörn fram till höger', cases: ['beg_cpos'] },
-      { id: 'twist', title: 'Vrid hörnen', short: "R' D' R D tills gult är uppåt", cases: ['beg_twist'] },
+      { id: 'edges', title: 'Gula kanterna', short: 'Sune flyttar kanterna', world: 'b6', cases: ['beg_edges'] },
+      { id: 'cpos', title: 'Gula hörnen på plats', short: 'Rätt hörn fram till höger', world: 'b7', cases: ['beg_cpos'] },
+      { id: 'twist', title: 'Vrid hörnen', short: "R' D' R D tills gult är uppåt", world: 'b8', cases: ['beg_twist'] },
     ],
   },
   {
@@ -728,6 +890,12 @@ const TRAIN_METHODS_SV = [
       { id: 'plle', title: 'Kanterna på plats', short: 'Ua, Ub, H och Z', world: 'w8', cases: ['ua', 'ub', 'h', 'z'] },
     ],
   },
+];
+
+// De två lektionsspåren. De första sex stegen delas; sedan skiljer sig sista våningen åt.
+export const TRACKS = [
+  { id: 'beg', worlds: ['w0', 'w1', 'w2', 'w3', 'w4', 'w5', 'b6', 'b7', 'b8'] },
+  { id: 'cfop', worlds: ['w0', 'w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9'] },
 ];
 
 // Innehållet på det valda språket. Byts ut när språket ändras (ES-moduler ger levande bindningar).

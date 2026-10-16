@@ -51,6 +51,9 @@ const GLYPHS = {
   w6: 'lllllllll',
   w7: 'a.a.l.a.a',
   w8: 'aaaaaaaaa',
+  b6: '.a.a.a.a.',
+  b7: 'a.a...a.a',
+  b8: 'l.l.r.l.l',
 };
 
 export function glyph(id, cls = '') {

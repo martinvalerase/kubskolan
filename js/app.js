@@ -1,6 +1,6 @@
 import { CubeView, parseAlg, invertAlg, moveHint, moveInstruction } from './cube.js';
 import { topView } from './diagram.js';
-import { WORLDS, ALL_CASES, caseById, TRAIN_METHODS } from './content.js';
+import { WORLDS, TRACKS, ALL_CASES, caseById, TRAIN_METHODS } from './content.js';
 import { icon, glyph, avatar, parseAvatar, AV_COLORS, AV_SHAPES, AV_FIGURES } from './icons.js';
 import { renderGames, renderSnake, renderBlocks } from './games.js';
 import { accountEmail, sendCode, verifyCode, signInWithPassword, setPassword, recordConsent, signOut, deleteAccount } from './auth.js';
@@ -120,6 +120,10 @@ Object.assign(UI.sv, {
   noAccount: 'Vi hittar inget konto med den adressen. Är du ny? Tryck på Registrera dig nedan.',
   sendFail: 'Det gick inte att skicka koden. Kontrollera adressen och försök igen.',
   noNet: 'Ingen uppkoppling. Försök igen när du är online.', waitAWhile: 'Vänta en stund innan du försöker igen.',
+  trackPick: 'Välj metod', trackBeg: 'Nybörjarmetoden', trackCfop: 'CFOP',
+  trackBegSub: n => `${n} lektioner. Lager för lager, enklast att börja med.`,
+  trackCfopSub: n => `${n} lektioner. Den snabbare metoden som tävlingskubare använder.`,
+  lessonsDone: (d, n) => `${d} av ${n} lektioner klara`, continue: 'Fortsätt', begin: 'Börja',
 });
 Object.assign(UI.en, {
   lessons: 'Lessons', pickLesson: 'Pick a lesson', games: 'Games', gamesSub: 'Two cube games',
@@ -156,6 +160,10 @@ Object.assign(UI.en, {
   noAccount: "We can't find an account with that address. New here? Tap Sign up below.",
   sendFail: "Couldn't send the code. Check the address and try again.",
   noNet: 'No connection. Try again when you are online.', waitAWhile: 'Wait a moment before trying again.',
+  trackPick: 'Choose a method', trackBeg: 'Beginner method', trackCfop: 'CFOP',
+  trackBegSub: n => `${n} lessons. Layer by layer, the easiest way to start.`,
+  trackCfopSub: n => `${n} lessons. The faster method competition cubers use.`,
+  lessonsDone: (d, n) => `${d} of ${n} lessons done`, continue: 'Continue', begin: 'Start',
 });
 
 const T = (k, ...a) => {
@@ -237,7 +245,14 @@ function offerGuestSave() {
 
 // ---------- Progress ----------
 
-const worldIndex = id => WORLDS.findIndex(w => w.id === id);
+// Lektionsspåret: nybörjarmetoden eller CFOP. Valet sparas på enheten (db.track); CFOP är standard.
+const trackId = () => (db.track === 'beg' ? 'beg' : 'cfop');
+const trackWorlds = () => TRACKS.find(t => t.id === trackId()).worlds.map(id => WORLDS.find(w => w.id === id));
+// Stegets nummer i det valda spåret, annars i det andra
+const stepNo = id => {
+  const i = TRACKS.find(t => t.id === trackId()).worlds.indexOf(id);
+  return i >= 0 ? i : TRACKS.find(t => t.id !== trackId()).worlds.indexOf(id);
+};
 const coreCases = w => (w.cases || []).filter(c => !c.bonus);
 
 function stars(p, w) {
@@ -610,12 +625,12 @@ function renderProfiles() {
       <p class="lead">${T('whoToday')}</p>
       <div class="profile-grid">
         ${realProfiles().map(p => {
-          const done = WORLDS.filter(w => p.lessons[w.id]).length;
+          const done = trackWorlds().filter(w => p.lessons[w.id]).length;
           return `
           <button class="profile-card" data-id="${p.id}">
             ${pAvatar(p, 'lg')}
             <span class="pname">${esc(p.name)}</span>
-            <span class="pmeta">${T('stepsOf', done, WORLDS.length)}</span>
+            <span class="pmeta">${T('stepsOf', done, trackWorlds().length)}</span>
           </button>`;
         }).join('')}
         ${accountEmail() ? '' : `<button class="profile-card" data-id="guest">
@@ -720,8 +735,9 @@ let adventureOpen = false;
 
 function renderMap() {
   const p = me();
-  const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
-  const current = WORLDS.findIndex(w => !p.lessons[w.id]); // nästa lektion att göra
+  const tw = trackWorlds();
+  const doneCount = tw.filter(w => p.lessons[w.id]).length;
+  const current = tw.findIndex(w => !p.lessons[w.id]); // nästa lektion att göra
 
   app.innerHTML = `
     <div class="screen map">
@@ -731,7 +747,7 @@ function renderMap() {
           : `<a class="who" href="#/" aria-label="${T('switchCuber')}">${pAvatar(p, 'md')}</a>`}
         <div>
           <h1>${T('hi', esc(p.guest ? T('guest') : p.name))}</h1>
-          <p class="sub">${doneCount === WORLDS.length ? T('allDone') : T('stepsDone', doneCount, WORLDS.length)}</p>
+          <p class="sub">${doneCount === tw.length ? T('allDone') : T('stepsDone', doneCount, tw.length)}</p>
         </div>
         <div class="head-actions">
           ${langSwitch()}
@@ -753,13 +769,13 @@ function renderMap() {
       </div>
       <button class="adventure-btn ${adventureOpen ? 'open' : ''}" aria-expanded="${adventureOpen}">
         <span class="tile-ic">${icon('flag')}</span>
-        <span class="adv-txt"><b>${T('adventure')}</b><small>${T('stepsDone', doneCount, WORLDS.length)}</small></span>
+        <span class="adv-txt"><b>${T('adventure')}</b><small>${T(trackId() === 'beg' ? 'trackBeg' : 'trackCfop')} · ${T('stepsDone', doneCount, tw.length)}</small></span>
         <span class="adv-chev">${icon('next')}</span>
       </button>
       <div class="path-wrap ${adventureOpen ? '' : 'hidden'}">
         <svg class="path-line" aria-hidden="true"><path class="track"/><path class="trail"/></svg>
         <ol class="path">
-          ${WORLDS.map((w, i) => {
+          ${tw.map((w, i) => {
             const done = !!p.lessons[w.id];
             const x = 0.5 + 0.38 * Math.sin(i * 1.15);
             return `
@@ -792,7 +808,7 @@ function renderMap() {
   };
 
 
-  app.querySelectorAll('.node').forEach(b => b.onclick = () => openLesson(p, WORLDS[+b.dataset.i]));
+  app.querySelectorAll('.node').forEach(b => b.onclick = () => openLesson(p, tw[+b.dataset.i]));
 
   // Rita den slingrande stigen mellan stegen
   const wrap = app.querySelector('.path-wrap');
@@ -821,40 +837,52 @@ function renderMap() {
 
 function renderLessons() {
   const p = me();
-  const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
-  const current = WORLDS.findIndex(w => !p.lessons[w.id]); // nästa lektion att göra
+  const tw = trackWorlds();
+  const doneCount = tw.filter(w => p.lessons[w.id]).length;
+  const current = tw.findIndex(w => !p.lessons[w.id]); // nästa lektion att göra
 
   const card = (w, i) => {
     const done = !!p.lessons[w.id];
     const resume = !done && (p.stepAt[w.id] || 0) > 0;
     const status = done ? starsHtml(stars(p, w))
-      : `<span class="lc-status go">${resume ? 'Fortsätt' : 'Börja'} ${icon('next')}</span>`;
+      : `<span class="lc-status go">${resume ? T('continue') : T('begin')} ${icon('next')}</span>`;
     return `
       <li class="lesson-card ${done ? 'done' : ''} ${i === current ? 'current' : ''}">
         <button class="lc-main" data-i="${i}">
           <span class="lc-ic">${glyph(w.id)}</span>
           <span class="lc-txt">
-            <span class="stop-num">Steg ${i}</span>
+            <span class="stop-num">${T('step', i)}</span>
             <b>${esc(w.title)}</b>
             <small>${esc(w.short)}</small>
           </span>
           ${status}
         </button>
-        ${done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} Frågor</a>` : ''}
+        ${done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} ${T('quiz')}</a>` : ''}
       </li>`;
   };
 
+  // De första sex lektionerna delas av båda metoderna, så framstegen följer med när man byter.
+  const pick = TRACKS.map(t => {
+    const on = t.id === trackId();
+    return `<button class="track ${on ? 'on' : ''}" data-track="${t.id}" role="tab" aria-selected="${on}">
+      <b>${T(t.id === 'beg' ? 'trackBeg' : 'trackCfop')}</b>
+      <small>${T(t.id === 'beg' ? 'trackBegSub' : 'trackCfopSub', t.worlds.length)}</small>
+    </button>`;
+  }).join('');
+
   app.innerHTML = `
     <div class="screen lessons-screen">
-      ${topbar({ back: '#/map', middle: `<span class="topbar-title">${icon('book')} Lektioner</span>`, right: pAvatar(p, 'sm') })}
+      ${topbar({ back: '#/map', middle: `<span class="topbar-title">${icon('book')} ${T('lessons')}</span>`, right: pAvatar(p, 'sm') })}
+      <div class="track-pick" role="tablist" aria-label="${T('trackPick')}">${pick}</div>
       <div class="lessons-sum">
-        <span>${doneCount} av ${WORLDS.length} lektioner klara</span>
+        <span>${T('lessonsDone', doneCount, tw.length)}</span>
       </div>
-      <div class="progress" role="progressbar" aria-valuenow="${doneCount}" aria-valuemax="${WORLDS.length}"><span style="width:${(doneCount / WORLDS.length) * 100}%"></span></div>
-      <ol class="lesson-list">${WORLDS.map(card).join('')}</ol>
+      <div class="progress" role="progressbar" aria-valuenow="${doneCount}" aria-valuemax="${tw.length}"><span style="width:${(doneCount / tw.length) * 100}%"></span></div>
+      <ol class="lesson-list">${tw.map(card).join('')}</ol>
     </div>`;
 
-  app.querySelectorAll('.lc-main').forEach(b => b.onclick = () => openLesson(p, WORLDS[+b.dataset.i]));
+  app.querySelectorAll('.lc-main').forEach(b => b.onclick = () => openLesson(p, tw[+b.dataset.i]));
+  app.querySelectorAll('.track').forEach(b => b.onclick = () => { db.track = b.dataset.track; save(); renderLessons(); });
 }
 
 // ---------- Lektion ----------
@@ -868,8 +896,8 @@ function caseFig(d) {
 
 function renderLesson(wid, n) {
   const p = me();
-  const wi = worldIndex(wid);
-  const w = WORLDS[wi];
+  const w = WORLDS.find(x => x.id === wid);
+  const wi = stepNo(wid);
   if (!w) { location.hash = '#/map'; return; }
   n = Math.max(0, Math.min(n, w.steps.length - 1));
   const step = w.steps[n];
@@ -943,8 +971,8 @@ function renderLesson(wid, n) {
 // Tre frågor i slutet av varje steg. Första svaret i content.js är det rätta.
 function renderQuiz(wid) {
   const p = me();
-  const wi = worldIndex(wid);
-  const w = WORLDS[wi];
+  const w = WORLDS.find(x => x.id === wid);
+  const wi = stepNo(wid);
   if (!w || !w.quiz) { location.hash = '#/map'; return; }
   const total = w.quiz.length;
   let q = 0, right = 0;
@@ -1309,7 +1337,7 @@ function renderOverview() {
             <div><small>${T('week')}</small><b>${week}</b></div>
           </div>
           <table>
-            ${WORLDS.map((w, i) => `<tr><td><span class="tglyph">${glyph(w.id)}</span>${i}. ${esc(w.title)}</td><td>${starsHtml(stars(p, w))}</td>
+            ${trackWorlds().map((w, i) => `<tr><td><span class="tglyph">${glyph(w.id)}</span>${i}. ${esc(w.title)}</td><td>${starsHtml(stars(p, w))}</td>
               <td>${p.quiz[w.id] != null ? T('quizPct', Math.round(p.quiz[w.id] * 100)) : ''}</td></tr>`).join('')}
           </table>
           <div class="row start">

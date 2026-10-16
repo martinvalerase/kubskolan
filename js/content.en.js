@@ -535,6 +535,128 @@ export const EN = {
         },
       ],
     },
+    b6: {
+      title: 'The yellow edges',
+      short: 'Beginner method: edges match the centres',
+      quiz: [
+        { q: 'What should the yellow edges match?', options: ['The centre of the side', 'The corners', 'The yellow centre'] },
+        { q: 'Two edges next to each other match. Where do you hold them?', options: ['At the back and on the right', 'At the front and on the left', 'On top and underneath'] },
+        { q: 'No edge matches. What do you do?', options: ['The algorithm once, then look again', 'Start over from the beginning', 'Turn the whole cube'] },
+      ],
+      steps: [
+        {
+          title: 'The yellow cross',
+          text: 'The top has a yellow cross. Now every yellow edge should also be the <b>same colour as the centre</b> on the side below it.',
+        },
+        {
+          title: 'Match the centres',
+          text: 'Look at the sides of the top layer. Turn the top (U) until as many edges as possible are the <b>same colour as the centre below</b>.<br><br>Do all four match? Then this step is done!',
+          rule: 'Turn the top until as many edges as possible match.',
+          diagram: 'Two match',
+        },
+        {
+          title: 'Two edges next to each other',
+          text: 'Do two edges that <b>sit next to each other</b> match, like an L? Hold them <b>at the back and on the right</b>, just like in the picture. Then do the algorithm. The other two edges swap places.',
+          rule: 'The correct edges at the back and on the right.',
+          cube: { parts: ['First half', 'Second half', 'Turn the top'] },
+        },
+        {
+          title: 'Otherwise: do it once',
+          text: 'Does no edge match, or only two that are <b>opposite</b> each other? Hold the cube as usual and do the algorithm <b>once</b>. Then turn the top and look again. Now the edges match in a new way!<br><br>Repeat until all four match. It usually takes one or two times.',
+          diagram: 'Two opposite',
+          cube: { parts: ['Once'] },
+        },
+        {
+          title: 'Your turn!',
+          text: 'Make all four yellow edges match the centres on your cube.',
+          help: [
+            ['I don’t know which edges match'],
+            ['Two edges next to each other match'],
+            ['No edge matches, or two opposite each other'],
+            ['The algorithm is Sune and an extra U: R U R\' U R U2 R\' U. Do it slowly.'],
+          ],
+        },
+      ],
+    },
+    b7: {
+      title: 'The yellow corners in place',
+      short: 'Beginner method: corners in the right place',
+      quiz: [
+        { q: 'Where do you hold the corner that is already right?', options: ['On top at the front right', 'At the back on the left', 'At the bottom on the right'] },
+        { q: 'What does the algorithm do to the other corners?', options: ['They swap places', 'They twist on the spot', 'Nothing'] },
+        { q: 'No corner is right. What do you do?', options: ['The algorithm once, from any side', 'Start over from the beginning', 'Turn the edges'] },
+      ],
+      steps: [
+        {
+          title: 'The edges match',
+          text: 'All four edges on top match the centres. Now the corners should go to the right place too. They are allowed to be twisted the wrong way for now.',
+        },
+        {
+          title: 'Which place does the corner belong to?',
+          text: 'A corner belongs between its <b>three colours</b>. Look at the corner’s colours on the sides. If they are the same as the edge colours next to it, the corner is in the <b>right place</b>, even if the yellow faces the wrong way.',
+          diagram: 'One corner is right',
+        },
+        {
+          title: 'Hold the right corner at the front right',
+          text: 'Find a corner that is already in the right place. Hold it <b>on top at the front right</b>. Then do the algorithm. The other three corners swap places.<br><br>Are they all right now? If not, do it once more, with the same corner at the front right.',
+          rule: 'The right corner at the front right.',
+          cube: { parts: ['First half', 'Second half'] },
+        },
+        {
+          title: 'No corner right?',
+          text: 'Is no corner in the right place? Do the algorithm <b>once</b>, from any side. Then one corner ends up right. After that, do as in the last step.',
+          diagram: 'No corner right',
+          cube: { parts: ['Once'] },
+        },
+        {
+          title: 'Your turn!',
+          text: 'Put all four yellow corners in the right place on your cube. The yellow may face any way.',
+          help: [
+            ['I don’t know which corner is right'],
+            ['One corner is right'],
+            ['No corner is right'],
+            ['Always hold the right corner on top at the front right before you do the algorithm.'],
+          ],
+        },
+      ],
+    },
+    b8: {
+      title: 'Twist the corners',
+      short: 'Beginner method: the last step, cube solved!',
+      quiz: [
+        { q: 'How long do you repeat R\' D\' R D?', options: ['Until yellow faces up', 'Always six times', 'Until the cube looks messy'] },
+        { q: 'What do you turn to switch to the next corner?', options: ['Only the top', 'The whole cube', 'The right side'] },
+        { q: 'The cube looks messy halfway. What do you do?', options: ['Keep going, it sorts itself out', 'Start over from the beginning', 'Stop'] },
+      ],
+      steps: [
+        {
+          title: 'The corners are in place',
+          text: 'All corners are in the right place. Some are still twisted the wrong way, so the yellow doesn’t face up. Now we twist them right.',
+        },
+        {
+          title: 'A new dance: R\' D\' R D',
+          text: 'We twist one corner at a time with a short dance: <b>R\' D\' R D</b>. Hold the corner you want to twist <b>on top at the front right</b>. Do the dance until the <b>yellow faces up</b>. It can take two or four times.',
+          rule: 'Dance until yellow faces up.',
+          cube: { parts: ['Dance 1', 'Dance 2'] },
+        },
+        {
+          title: 'Messy? That’s how it should be!',
+          text: 'While you dance, the cube looks messy. Don’t worry! Turn <b>only the top</b> (U) when you switch corners, never the whole cube. When all corners are done, the whole cube is solved.',
+          rule: 'Only turn the top between corners.',
+          cube: { parts: ['First corner: 2 times', 'Turn the top', 'Second corner: 4 times', 'Turn back'] },
+        },
+        {
+          title: 'You can solve the cube!',
+          text: 'Mix up your cube and solve it from start to finish: daisy, cross, white corners, middle layer, yellow cross, yellow edges, yellow corners in place and twist the corners.<br><br>You have learned the beginner method!',
+          help: [
+            ['How do I twist a corner?'],
+            ['The cube looks messy'],
+            ['Only turn the top between corners. When the last corner is right, turn the top so the sides match.'],
+          ],
+        },
+      ],
+    },
+
   },
 
   cases: {

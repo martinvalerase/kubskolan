@@ -721,3 +721,11 @@ code.alg {
 .acct-card .btn.ghost { width: 100%; margin-top: 8px; }
 .acct-card .row .btn.ghost { width: auto; margin-top: 0; }
 .map-banner { margin: 0 0 16px; max-width: none; }
+
+/* ---------- Val av lektionsspår ---------- */
+.track-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 14px; }
+.track { text-align: left; border: 2px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 18px; padding: 12px 14px; cursor: pointer; font: inherit; display: grid; gap: 4px; }
+.track b { font-family: var(--display); font-size: 1.05rem; }
+.track small { color: var(--ink-2); line-height: 1.3; }
+.track.on { border-color: var(--mint); background: var(--panel-2); }
+@media (max-width: 420px) { .track-pick { grid-template-columns: 1fr; } }
