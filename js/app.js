@@ -88,13 +88,12 @@ const UI = {
 };
 // Konto, gäst och startsida (språkstöd för det som lades till efter översättningen)
 Object.assign(UI.sv, {
-  lessons: 'Lektioner', pickLesson: 'Välj lektion', games: 'Spel', gamesSub: 'Kubormen och Kubfall', needsAccount: 'Kräver konto',
+  lessons: 'Lektioner', pickLesson: 'Välj lektion', games: 'Spel', gamesSub: 'Kubormen och Kubfall', 
   tagline: 'Lär dig lösa Rubiks kub, steg för steg.', logIn: 'Logga in', signUp: 'Registrera dig', asGuest: 'Fortsätt som gäst',
-  guestNote: 'Som gäst får du lektionerna och Äventyret. Träna, Tidtagning och Spel kräver konto.', privacy: 'Integritet',
-  gateTitle: 'Det här kräver ett konto', gateText: 'Registrera dig gratis för att använda Träna, Tidtagning och Spel.',
-  guest: 'Gäst', noProfile: 'Utan profil', account: 'Konto',
-  guestBanner: '<b>Du är gäst.</b> Registrera dig för Träna, Tidtagning och Spel.',
-  guestMapBanner: '<b>Du är gäst.</b> Registrera dig för att spara dina framsteg och få Träna, Tidtagning och Spel.',
+  guestNote: 'Som gäst fungerar allt, men dina framsteg sparas bara på den här enheten. Med ett konto följer de med dig.', privacy: 'Integritet',
+    guest: 'Gäst', noProfile: 'Utan profil', account: 'Konto',
+  guestBanner: '<b>Du är gäst.</b> Registrera dig för att spara dina framsteg i ett konto.',
+  guestMapBanner: '<b>Du är gäst.</b> Dina framsteg sparas bara på den här enheten. Registrera dig så följer de med dig.',
   saveProgress: 'Spara dina framsteg?', saveProgressText: 'Du har redan kommit en bit på vägen som gäst. Vill du spara det i kontot?',
   cuberName: 'Vad heter kubaren?', skip: 'Hoppa över', save: 'Spara',
   loggedIn: 'Inloggad', syncText: 'Profiler och framsteg sparas i ditt konto och följer med mellan enheter. Appen fungerar även utan nät.',
@@ -125,13 +124,12 @@ Object.assign(UI.sv, {
   noNet: 'Ingen uppkoppling. Försök igen när du är online.', waitAWhile: 'Vänta en stund innan du försöker igen.',
 });
 Object.assign(UI.en, {
-  lessons: 'Lessons', pickLesson: 'Pick a lesson', games: 'Games', gamesSub: 'Two cube games', needsAccount: 'Needs an account',
+  lessons: 'Lessons', pickLesson: 'Pick a lesson', games: 'Games', gamesSub: 'Two cube games',
   tagline: "Learn to solve the Rubik's Cube, step by step.", logIn: 'Log in', signUp: 'Sign up', asGuest: 'Continue as guest',
-  guestNote: 'As a guest you get the lessons and the Adventure. Practice, Timer and Games need an account.', privacy: 'Privacy',
-  gateTitle: 'This needs an account', gateText: 'Sign up for free to use Practice, Timer and Games.',
-  guest: 'Guest', noProfile: 'No profile', account: 'Account',
-  guestBanner: "<b>You're a guest.</b> Sign up to use Practice, Timer and Games.",
-  guestMapBanner: "<b>You're a guest.</b> Sign up to save your progress and unlock Practice, Timer and Games.",
+  guestNote: 'Everything works as a guest, but your progress is only saved on this device. With an account it follows you.', privacy: 'Privacy',
+    guest: 'Guest', noProfile: 'No profile', account: 'Account',
+  guestBanner: "<b>You're a guest.</b> Sign up to save your progress in an account.",
+  guestMapBanner: "<b>You're a guest.</b> Your progress is only saved on this device. Sign up and it follows you.",
   saveProgress: 'Save your progress?', saveProgressText: "You've already made progress as a guest. Do you want to save it in your account?",
   cuberName: "What's the cuber's name?", skip: 'Skip', save: 'Save',
   loggedIn: 'Logged in', syncText: 'Profiles and progress are saved in your account and follow you between devices. The app also works offline.',
@@ -543,9 +541,6 @@ function createPlayer(host, cfg) {
 
 // ---------- Router ----------
 
-// Skärmar som kräver konto. Gäster ser dem på kartan, men möts av renderGate().
-const LOCKED = ['train', 'algs', 'drill', 'timer', 'games', 'snake', 'blocks', 'overview'];
-
 // Det spelen i games.js behöver från appen. onLeave anropas när man lämnar skärmen.
 const gameCtx = () => ({ app, me, save, topbar, pAvatar, confetti, track, onLeave: fn => cleanups.push(fn) });
 
@@ -564,7 +559,6 @@ function route() {
     return renderProfiles();
   }
   if (name === 'start') return renderStart();
-  if (LOCKED.includes(name) && !accountEmail()) return renderGate();
   if (name === 'map') return renderMap();
   if (name === 'lessons') return renderLessons();
   if (name === 'lesson') return renderLesson(a, parseInt(b || '0', 10));
@@ -612,21 +606,6 @@ function renderStart() {
     db.guest = true; save();
     if (location.hash === '#/' || location.hash === '') route(); else location.hash = '#/';
   };
-}
-
-// Visas när en gäst öppnar något som kräver konto (även via en direktlänk).
-function renderGate() {
-  app.innerHTML = `
-    <div class="screen center-screen gate">
-      <div class="medal big">${icon('lock')}</div>
-      <h2>${T('gateTitle')}</h2>
-      <p class="muted">${T('gateText')}</p>
-      <div class="start-actions">
-        <a class="btn primary" href="#/konto/register">${T('signUp')}</a>
-        <a class="btn" href="#/konto/login">${T('logIn')}</a>
-        <a class="btn ghost" href="#/${me() ? 'map' : ''}">${T('prev')}</a>
-      </div>
-    </div>`;
 }
 
 function renderProfiles() {
@@ -766,8 +745,6 @@ let adventureOpen = false;
 
 function renderMap() {
   const p = me();
-  const lockTxt = accountEmail() ? '' : T('needsAccount'); // gäster ser flikarna men kommer inte in
-  const lockCls = lockTxt ? 'locked' : '';
   const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
   const current = WORLDS.findIndex((w, i) => isUnlocked(p, i) && !p.lessons[w.id]);
 
@@ -784,7 +761,7 @@ function renderMap() {
         <div class="head-actions">
           ${langSwitch()}
           ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="${T('unlockAll')}">${icon('lock')}</button>`}
-          <a class="icon-btn ${lockCls}" href="#/overview" aria-label="${T('overview')}${lockTxt ? ' (' + lockTxt + ')' : ''}">${icon('chart')}</a>
+          <a class="icon-btn" href="#/overview" aria-label="${T('overview')}">${icon('chart')}</a>
         </div>
       </header>
       ${accountEmail() ? '' : `<div class="guest-banner map-banner">
@@ -796,9 +773,9 @@ function renderMap() {
       </div>`}
       <div class="tiles">
         <a class="tile lessons" href="#/lessons"><span class="tile-ic">${icon('book')}</span><b>${T('lessons')}</b><small>${T('pickLesson')}</small></a>
-        <a class="tile ${lockCls}" href="#/train"><span class="tile-ic">${icon('target')}</span><b>${T('train')}</b><small>${lockTxt || T('algorithms')}</small></a>
-        <a class="tile alt ${lockCls}" href="#/timer"><span class="tile-ic">${icon('timer')}</span><b>${T('timer')}</b><small>${lockTxt || T('howFast')}</small></a>
-        <a class="tile games ${lockCls}" href="#/games"><span class="tile-ic">${icon('gamepad')}</span><b>${T('games')}</b><small>${lockTxt || T('gamesSub')}</small></a>
+        <a class="tile" href="#/train"><span class="tile-ic">${icon('target')}</span><b>${T('train')}</b><small>${T('algorithms')}</small></a>
+        <a class="tile alt" href="#/timer"><span class="tile-ic">${icon('timer')}</span><b>${T('timer')}</b><small>${T('howFast')}</small></a>
+        <a class="tile games" href="#/games"><span class="tile-ic">${icon('gamepad')}</span><b>${T('games')}</b><small>${T('gamesSub')}</small></a>
       </div>
       <button class="adventure-btn ${adventureOpen ? 'open' : ''}" aria-expanded="${adventureOpen}">
         <span class="tile-ic">${icon('flag')}</span>
@@ -1371,7 +1348,7 @@ function renderOverview() {
           </table>
           <div class="row start">
             <button class="btn ghost small reset" data-id="${p.id}">${icon('restart')} ${T('resetProgress')}</button>
-            <button class="btn ghost small delete" data-id="${p.id}">${icon('trash')} ${T('deleteProfile')}</button>
+            ${p.guest ? "" : `<button class="btn ghost small delete" data-id="${p.id}">${icon('trash')} ${T('deleteProfile')}</button>`}
           </div>
         </section>`;
       }).join('')}

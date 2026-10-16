@@ -709,10 +709,6 @@ code.alg {
 .guest-banner p { margin: 0; color: var(--ink-2); }
 .guest-banner p b { color: var(--ink); }
 .guest-banner .row { margin-top: 12px; }
-.gate .start-actions { margin-top: 22px; }
-.tile.locked { opacity: .7; }
-.tile.locked .tile-ic { background: var(--panel-3); color: var(--ink-2); }
-.icon-btn.locked { opacity: .7; }
 .sync-state { min-height: 1.3em; margin: 12px 0 0; color: var(--ink-2); }
 .sync-state.err { color: var(--coral); }
 .tabs { display: flex; gap: 6px; padding: 4px; margin: 10px 0 14px; border-radius: 16px; background: var(--panel-2); }
