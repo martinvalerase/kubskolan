@@ -664,8 +664,8 @@ code.alg {
   .stop { padding-left: calc(var(--x) * (100% - 230px)); }
   .node { width: 74px; height: 74px; }
   .stop-label { max-width: 150px; }
-  .tile { grid-template-columns: 1fr; text-align: left; }
-  .tile-ic { grid-row: auto; margin-bottom: 8px; }
+  .tile { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .tile-ic { grid-row: auto; margin: 0 0 8px; }
   .map-head { gap: 10px; }
   .map-head h1 { font-size: 1.6rem; }
   .map-head .head-actions { gap: 6px; }

@@ -24,8 +24,7 @@ const UI = {
     figure: 'Figur', shape: 'Form', colour: 'Färg', shapeN: i => `Form ${i}`, colourN: i => `Färg ${i}`,
     figures: ['Bokstav', 'Katt', 'Häst', 'Snubbe', 'Sol'],
     cancel: 'Avbryt', done: 'Klar', defaultName: 'Kubare',
-    unlockAll: 'Lås upp alla steg', enterCode: 'Skriv koden.', wrongCode: 'Fel kod. Försök igen.', unlock: 'Lås upp',
-    switchCuber: 'Byt kubare', hi: name => `Hej ${name}!`, allDone: 'Du har klarat alla steg.',
+        switchCuber: 'Byt kubare', hi: name => `Hej ${name}!`, allDone: 'Du har klarat alla steg.',
     stepsDone: (d, n) => `${d} av ${n} steg klara`, overview: 'Översikt',
     train: 'Träna', algorithms: 'Algoritmer', timer: 'Tidtagning', howFast: 'Hur snabb är du?', adventure: 'Äventyret',
     start: 'Start', step: i => `Steg ${i}`, quiz: 'Frågor', back: 'Bak', towardYou: 'Mot dig',
@@ -61,8 +60,7 @@ const UI = {
     figure: 'Figure', shape: 'Shape', colour: 'Colour', shapeN: i => `Shape ${i}`, colourN: i => `Colour ${i}`,
     figures: ['Letter', 'Cat', 'Horse', 'Dude', 'Sun'],
     cancel: 'Cancel', done: 'Done', defaultName: 'Cuber',
-    unlockAll: 'Unlock all steps', enterCode: 'Enter the code.', wrongCode: 'That’s not the code. Try again.', unlock: 'Unlock',
-    switchCuber: 'Switch cuber', hi: name => `Hi ${name}!`, allDone: 'You’ve finished every step.',
+        switchCuber: 'Switch cuber', hi: name => `Hi ${name}!`, allDone: 'You’ve finished every step.',
     stepsDone: (d, n) => `${d} of ${n} steps done`, overview: 'Overview',
     train: 'Practice', algorithms: 'Algorithms', timer: 'Timer', howFast: 'How fast are you?', adventure: 'The Adventure',
     start: 'Start', step: i => `Step ${i}`, quiz: 'Quiz', back: 'Back', towardYou: 'Facing you',
@@ -183,7 +181,7 @@ function load() {
     const d = JSON.parse(localStorage.getItem(KEY));
     if (d && Array.isArray(d.profiles)) return d;
   } catch { /* tom eller blockerad lagring */ }
-  return { profiles: [], current: null, unlockAll: false, guest: false };
+  return { profiles: [], current: null, guest: false };
 }
 function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { /* ignoreras */ }
@@ -241,10 +239,6 @@ function offerGuestSave() {
 
 const worldIndex = id => WORLDS.findIndex(w => w.id === id);
 const coreCases = w => (w.cases || []).filter(c => !c.bonus);
-
-function isUnlocked(p, i) {
-  return i === 0 || db.unlockAll || !!p.lessons[WORLDS[i - 1].id];
-}
 
 function stars(p, w) {
   if (!p.lessons[w.id]) return 0;
@@ -714,25 +708,6 @@ function newProfileDialog() {
 
 // ---------- Karta ----------
 
-// Låset på kartan: rätt kod låser upp alla steg (samma som översiktens reglage)
-const UNLOCK_CODE = '00000';
-
-function askUnlockCode(msg) {
-  const wrap = modal(`<h2>${T('unlockAll')}</h2>
-    <p class="muted">${msg || T('enterCode')}</p>
-    <input class="field gate" inputmode="numeric" autocomplete="off">`, [
-    [T('cancel'), null, 'ghost'],
-    [T('unlock'), () => check(), 'primary'],
-  ]);
-  const input = wrap.querySelector('.gate');
-  const check = () => {
-    wrap.remove();
-    if (input.value.trim() === UNLOCK_CODE) { db.unlockAll = true; save(); route(); }
-    else askUnlockCode(T('wrongCode'));
-  };
-  input.onkeydown = e => { if (e.key === 'Enter') check(); };
-  input.focus();
-}
 
 // Klara lektioner startar om från början, påbörjade fortsätter där man var.
 function openLesson(p, w) {
@@ -746,7 +721,7 @@ let adventureOpen = false;
 function renderMap() {
   const p = me();
   const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
-  const current = WORLDS.findIndex((w, i) => isUnlocked(p, i) && !p.lessons[w.id]);
+  const current = WORLDS.findIndex(w => !p.lessons[w.id]); // nästa lektion att göra
 
   app.innerHTML = `
     <div class="screen map">
@@ -760,7 +735,6 @@ function renderMap() {
         </div>
         <div class="head-actions">
           ${langSwitch()}
-          ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="${T('unlockAll')}">${icon('lock')}</button>`}
           <a class="icon-btn" href="#/overview" aria-label="${T('overview')}">${icon('chart')}</a>
         </div>
       </header>
@@ -786,20 +760,19 @@ function renderMap() {
         <svg class="path-line" aria-hidden="true"><path class="track"/><path class="trail"/></svg>
         <ol class="path">
           ${WORLDS.map((w, i) => {
-            const open = isUnlocked(p, i);
             const done = !!p.lessons[w.id];
             const x = 0.5 + 0.38 * Math.sin(i * 1.15);
             return `
-            <li class="stop ${open ? '' : 'locked'} ${done ? 'done' : ''} ${i === current ? 'current' : ''}" style="--x:${x.toFixed(3)}">
-              <button class="node" data-i="${i}" ${open ? '' : 'disabled'} aria-label="${esc(w.title)}">
-                ${open ? glyph(w.id) : icon('lock')}
+            <li class="stop ${done ? 'done' : ''} ${i === current ? 'current' : ''}" style="--x:${x.toFixed(3)}">
+              <button class="node" data-i="${i}" aria-label="${esc(w.title)}">
+                ${glyph(w.id)}
                 ${i === current ? `<span class="node-tag">${T('start')}</span>` : ''}
               </button>
               <div class="stop-label">
                 <span class="stop-num">${T('step', i)}</span>
                 <b>${esc(w.title)}</b>
                 ${done ? starsHtml(stars(p, w)) : `<small>${esc(w.short)}</small>`}
-                ${open && done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} ${T('quiz')}</a>` : ''}
+                ${done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} ${T('quiz')}</a>` : ''}
               </div>
             </li>`;
           }).join('')}
@@ -818,8 +791,6 @@ function renderMap() {
     app.querySelector('.path-wrap').classList.toggle('hidden', !adventureOpen);
   };
 
-  const unlockBtn = app.querySelector('.unlock-btn');
-  if (unlockBtn) unlockBtn.onclick = () => askUnlockCode('');
 
   app.querySelectorAll('.node').forEach(b => b.onclick = () => openLesson(p, WORLDS[+b.dataset.i]));
 
@@ -851,27 +822,25 @@ function renderMap() {
 function renderLessons() {
   const p = me();
   const doneCount = WORLDS.filter(w => p.lessons[w.id]).length;
-  const current = WORLDS.findIndex((w, i) => isUnlocked(p, i) && !p.lessons[w.id]);
+  const current = WORLDS.findIndex(w => !p.lessons[w.id]); // nästa lektion att göra
 
   const card = (w, i) => {
-    const open = isUnlocked(p, i);
     const done = !!p.lessons[w.id];
     const resume = !done && (p.stepAt[w.id] || 0) > 0;
     const status = done ? starsHtml(stars(p, w))
-      : !open ? `<span class="lc-status">${icon('lock')} Låst</span>`
       : `<span class="lc-status go">${resume ? 'Fortsätt' : 'Börja'} ${icon('next')}</span>`;
     return `
-      <li class="lesson-card ${open ? '' : 'locked'} ${done ? 'done' : ''} ${i === current ? 'current' : ''}">
-        <button class="lc-main" data-i="${i}" ${open ? '' : 'disabled'}>
-          <span class="lc-ic">${open ? glyph(w.id) : icon('lock')}</span>
+      <li class="lesson-card ${done ? 'done' : ''} ${i === current ? 'current' : ''}">
+        <button class="lc-main" data-i="${i}">
+          <span class="lc-ic">${glyph(w.id)}</span>
           <span class="lc-txt">
             <span class="stop-num">Steg ${i}</span>
             <b>${esc(w.title)}</b>
-            <small>${open ? esc(w.short) : 'Klara föregående steg först'}</small>
+            <small>${esc(w.short)}</small>
           </span>
           ${status}
         </button>
-        ${open && done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} Frågor</a>` : ''}
+        ${done ? `<a class="mini-btn" href="#/quiz/${w.id}">${icon('question')} Frågor</a>` : ''}
       </li>`;
   };
 
@@ -880,15 +849,12 @@ function renderLessons() {
       ${topbar({ back: '#/map', middle: `<span class="topbar-title">${icon('book')} Lektioner</span>`, right: pAvatar(p, 'sm') })}
       <div class="lessons-sum">
         <span>${doneCount} av ${WORLDS.length} lektioner klara</span>
-        ${db.unlockAll ? '' : `<button class="icon-btn unlock-btn" aria-label="Lås upp alla steg">${icon('lock')}</button>`}
       </div>
       <div class="progress" role="progressbar" aria-valuenow="${doneCount}" aria-valuemax="${WORLDS.length}"><span style="width:${(doneCount / WORLDS.length) * 100}%"></span></div>
       <ol class="lesson-list">${WORLDS.map(card).join('')}</ol>
     </div>`;
 
   app.querySelectorAll('.lc-main').forEach(b => b.onclick = () => openLesson(p, WORLDS[+b.dataset.i]));
-  const unlockBtn = app.querySelector('.unlock-btn');
-  if (unlockBtn) unlockBtn.onclick = () => askUnlockCode('');
 }
 
 // ---------- Lektion ----------
@@ -904,7 +870,7 @@ function renderLesson(wid, n) {
   const p = me();
   const wi = worldIndex(wid);
   const w = WORLDS[wi];
-  if (!w || !isUnlocked(p, wi)) { location.hash = '#/map'; return; }
+  if (!w) { location.hash = '#/map'; return; }
   n = Math.max(0, Math.min(n, w.steps.length - 1));
   const step = w.steps[n];
   p.stepAt[w.id] = n; save();
@@ -979,7 +945,7 @@ function renderQuiz(wid) {
   const p = me();
   const wi = worldIndex(wid);
   const w = WORLDS[wi];
-  if (!w || !w.quiz || !isUnlocked(p, wi)) { location.hash = '#/map'; return; }
+  if (!w || !w.quiz) { location.hash = '#/map'; return; }
   const total = w.quiz.length;
   let q = 0, right = 0;
 
@@ -1353,11 +1319,9 @@ function renderOverview() {
         </section>`;
       }).join('')}
       <section class="panel pcard">
-        <label class="toggle"><input type="checkbox" class="unlock" ${db.unlockAll ? 'checked' : ''}><span class="switch"></span> ${T('unlockAll')}</label>
-        <p class="muted small">${T('deviceOnly')}</p>
+        ${accountEmail() ? '' : `<p class="muted small">${T('deviceOnly')}</p>`}
       </section>
     </div>`;
-  app.querySelector('.unlock').onchange = e => { db.unlockAll = e.target.checked; save(); };
   app.querySelectorAll('.reset').forEach(b => b.onclick = () => {
     const p = db.profiles.find(x => x.id === b.dataset.id);
     modal(`<h2>${T('resetQ', esc(p.name))}</h2><p class="muted">${T('resetWarn')}</p>`,
