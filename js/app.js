@@ -124,7 +124,6 @@ Object.assign(UI.sv, {
   trackBegSub: n => `${n} lektioner. Lager för lager, enklast att börja med.`,
   trackCfopSub: n => `${n} lektioner. Den snabbare metoden som tävlingskubare använder.`,
   lessonsDone: (d, n) => `${d} av ${n} lektioner klara`, continue: 'Fortsätt', begin: 'Börja',
-  lightMode: 'Ljust tema', darkMode: 'Mörkt tema',
 });
 Object.assign(UI.en, {
   lessons: 'Lessons', pickLesson: 'Pick a lesson', games: 'Games', gamesSub: 'Two cube games',
@@ -165,7 +164,6 @@ Object.assign(UI.en, {
   trackBegSub: n => `${n} lessons. Layer by layer, the easiest way to start.`,
   trackCfopSub: n => `${n} lessons. The faster method competition cubers use.`,
   lessonsDone: (d, n) => `${d} of ${n} lessons done`, continue: 'Continue', begin: 'Start',
-  lightMode: 'Light mode', darkMode: 'Dark mode',
 });
 
 const T = (k, ...a) => {
@@ -179,29 +177,6 @@ const langSwitch = () => `<div class="lang-switch" role="group" aria-label="${T(
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-lang]');
   if (b) setLang(b.dataset.lang);
-});
-
-// Färgskala: mörk (standard) eller ljus. Valet sparas på enheten och sätts tidigt i index.html så att sidan inte blinkar.
-const THEME_KEY = 'kubskolan.theme';
-const getTheme = () => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
-const themeIcon = () => icon(getTheme() === 'light' ? 'moon' : 'sun'); // visar vad man byter till
-const themeLabel = () => T(getTheme() === 'light' ? 'darkMode' : 'lightMode');
-const themeBtn = () => `<button class="icon-btn theme-btn" data-theme-toggle aria-label="${themeLabel()}" title="${themeLabel()}">${themeIcon()}</button>`;
-function syncTheme() {
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', getTheme() === 'light' ? '#F6FAF3' : '#0B2219');
-  document.querySelectorAll('[data-theme-toggle]').forEach(b => {
-    b.innerHTML = themeIcon();
-    b.setAttribute('aria-label', themeLabel());
-    b.title = themeLabel();
-  });
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('[data-theme-toggle]')) return;
-  const next = getTheme() === 'light' ? 'dark' : 'light';
-  document.documentElement.dataset.theme = next;
-  try { localStorage.setItem(THEME_KEY, next); } catch { /* ignoreras */ }
-  syncTheme();
 });
 
 // ---------- Lagring ----------
@@ -625,7 +600,7 @@ const LOGO = `<svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
 function renderStart() {
   app.innerHTML = `
     <div class="screen start">
-      <div class="profiles-top">${langSwitch()}${themeBtn()}</div>
+      <div class="profiles-top">${langSwitch()}</div>
       <div class="brand">${LOGO}<h1>${T('appName')}</h1></div>
       <p class="lead">${T('tagline')}</p>
       <div class="start-actions">
@@ -645,7 +620,7 @@ function renderStart() {
 function renderProfiles() {
   app.innerHTML = `
     <div class="screen profiles">
-      <div class="profiles-top">${langSwitch()}${themeBtn()}</div>
+      <div class="profiles-top">${langSwitch()}</div>
       <div class="brand">${LOGO}<h1>${T('appName')}</h1></div>
       <p class="lead">${T('whoToday')}</p>
       <div class="profile-grid">
@@ -776,7 +751,6 @@ function renderMap() {
         </div>
         <div class="head-actions">
           ${langSwitch()}
-          ${themeBtn()}
           <a class="icon-btn" href="#/overview" aria-label="${T('overview')}">${icon('chart')}</a>
         </div>
       </header>
@@ -1703,7 +1677,6 @@ if (window.speechSynthesis) speechSynthesis.getVoices();
 const setTitle = () => { document.title = T('appName'); };
 onLang(() => { setTitle(); document.querySelectorAll('.modal-wrap').forEach(m => m.remove()); route(); });
 setTitle();
-syncTheme();
 route();
 
 // Synka när appen öppnas, kommer fram igen eller får nät.

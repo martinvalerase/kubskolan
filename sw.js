@@ -1,6 +1,6 @@
 // Service worker: gör att appen fungerar utan internet.
 // Höj versionen när filerna ändras så hämtas de nya.
-const VERSION = 'kubskolan-v29';
+const VERSION = 'kubskolan-v28';
 const FILES = [
   './', 'index.html', 'css/style.css', 'js/app.js', 'js/cube.js', 'js/content.js', 'js/icons.js', 'js/diagram.js', 'js/auth.js', 'js/sync.js', 'js/games.js', 'js/i18n.js', 'js/content.en.js',
   'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png',
